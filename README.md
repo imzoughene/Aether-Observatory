@@ -1,101 +1,104 @@
-# AngularEnterpriseDashboardAngularNxSignalsRxJS
+# Aether — Enterprise Dashboard (Angular / Nx)
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Monorepo Nx pour un **tableau de bord d’entreprise** moderne : Angular avec **Signals**, **RxJS** pour les flux asynchrones, et une architecture modulaire prête à accueillir des bibliothèques partagées (`libs/`).
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Objectif du projet
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+Fournir une base applicative scalable pour un dashboard entreprise : routing, state réactif (signals + RxJS), composants réutilisables et conventions Nx (lint, tests, build cache). L’application hôte actuelle est **`aether-app`**.
 
-## Run tasks
+## Stack technique
 
-To run the dev server for your app, use:
+| Domaine | Technologies |
+|--------|----------------|
+| Framework | [Angular](https://angular.dev) 22 (standalone, `OnPush` par défaut via générateurs Nx) |
+| Monorepo | [Nx](https://nx.dev) 23 |
+| Réactivité | Angular Signals, [RxJS](https://rxjs.dev) 7.8 |
+| Langage | TypeScript 6 (mode strict) |
+| Styles | SCSS |
+| Tests unitaires | Jest (`jest-preset-angular`) |
+| Qualité | ESLint, Prettier |
+| Build / dev server | `@angular/build` (application builder) |
+
+## Prérequis
+
+- **Node.js** 20.x ou 22.x (LTS recommandé)
+- **npm** 10+ (fourni avec Node)
+
+Vérifier la version :
+
+```sh
+node -v
+npm -v
+```
+
+## Installation
+
+À la racine du dépôt :
+
+```sh
+npm install
+```
+
+## Commandes principales
+
+Scripts npm (racine) — préférés pour l’onboarding :
+
+| Commande | Description |
+|----------|-------------|
+| `npm start` | Serveur de dev (`aether-app`), rechargement à chaud |
+| `npm run build` | Build production dans `dist/apps/aether-app` |
+| `npm test` | Tests unitaires Jest de `aether-app` |
+| `npm run lint` | ESLint sur les projets du workspace |
+| `npm run lint:fix` | ESLint avec corrections automatiques |
+| `npm run format` | Prettier (écriture) |
+| `npm run format:check` | Prettier (vérification CI) |
+
+Équivalents Nx directs :
 
 ```sh
 npx nx serve aether-app
-```
-
-To create a production bundle:
-
-```sh
 npx nx build aether-app
+npx nx test aether-app
+npx nx run-many -t lint
+npx nx graph
 ```
 
-To see all available targets to run for a project, run:
+Après `npm run build`, servir le bundle localement :
 
 ```sh
-npx nx show project aether-app
+npx nx serve-static aether-app
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+L’app de dev est en général disponible sur [http://localhost:4200](http://localhost:4200) (port par défaut Angular).
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Structure du dépôt
 
-## Add new projects
+Vue d’ensemble :
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/angular:app demo
+```text
+.
+├── apps/
+│   └── aether-app/          # Application Angular (shell du dashboard)
+├── libs/                    # Bibliothèques Nx partagées (feature, UI, data, etc.)
+├── docs/
+│   └── STRUCTURE.md         # Détail des dossiers et conventions
+├── nx.json                  # Configuration Nx (cache, générateurs, plugins)
+├── package.json             # Scripts et dépendances workspace
+├── tsconfig.base.json       # TypeScript partagé, alias `paths`
+├── eslint.config.mjs        # ESLint racine
+└── jest.preset.js           # Preset Jest partagé
 ```
 
-To generate a new library, use:
+Documentation détaillée : [docs/STRUCTURE.md](./docs/STRUCTURE.md).
 
-```sh
-npx nx g @nx/angular:lib mylib
-```
+## Développement
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+- **Préfixe composants** : `aether` (configuré dans `nx.json` / `project.json`)
+- **Nouvelle lib** : `npx nx g @nx/angular:lib <nom> --directory=libs/<nom>`
+- **Nouveau composant** : `npx nx g @nx/angular:component <nom> --project=aether-app`
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Voir [CONTRIBUTING.md](./CONTRIBUTING.md) pour le flux de contribution, les conventions et la checklist avant PR.
 
-## Set up CI!
+## Licence
 
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+MIT — voir le champ `license` dans `package.json`.
