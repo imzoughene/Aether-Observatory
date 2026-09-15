@@ -3,6 +3,7 @@
     "nrwl.angular-console",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
     "firsttris.vscode-jest-runner"
   ]
 }

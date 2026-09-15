@@ -6,7 +6,10 @@
     "start": "nx serve aether-app",
     "build": "nx build aether-app",
     "test": "nx test aether-app",
-    "lint": "nx lint aether-app",
+    "lint": "nx run-many -t lint",
+    "lint:fix": "nx run-many -t lint --fix",
+    "format": "nx format:write",
+    "format:check": "nx format:check",
     "nx": "nx"
   },
   "private": true,
