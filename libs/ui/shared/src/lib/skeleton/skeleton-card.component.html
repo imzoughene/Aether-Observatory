@@ -1,0 +1,21 @@
+<div class="skeleton-card">
+  @if (header) {
+    <div class="card-header">
+      @if (avatar) {
+        <aether-skeleton shape="circular" size="md"></aether-skeleton>
+      }
+      <div class="header-content">
+        <aether-skeleton-text [lines]="2" [lineConfig]="headerLineConfig"></aether-skeleton-text>
+      </div>
+    </div>
+  }
+  <div class="card-body">
+    <aether-skeleton-text [lines]="bodyLines"></aether-skeleton-text>
+  </div>
+  @if (footer) {
+    <div class="card-footer">
+      <aether-skeleton shape="rounded" size="sm" customWidth="120px" customHeight="36px"></aether-skeleton>
+      <aether-skeleton shape="rounded" size="sm" customWidth="100px" customHeight="36px"></aether-skeleton>
+    </div>
+  }
+</div>

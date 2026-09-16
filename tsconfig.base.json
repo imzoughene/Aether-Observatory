@@ -2,6 +2,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "bundler",
@@ -19,7 +21,10 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
-    "paths": {}
+    "paths": {
+      "@aether/ui-shared": ["libs/ui/shared/src/index.ts"],
+      "@aether/ui-shared/styles": ["libs/ui/shared/src/styles/index.scss"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

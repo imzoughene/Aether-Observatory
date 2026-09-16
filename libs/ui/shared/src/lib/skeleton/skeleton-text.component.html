@@ -1,0 +1,10 @@
+<div class="skeleton-text" role="presentation" aria-hidden="true">
+  @for (line of linesArray(); track $index) {
+    <aether-skeleton
+      shape="text"
+      [size]="lineSize($index)"
+      [customWidth]="lineWidth($index)"
+      class="line"
+    ></aether-skeleton>
+  }
+</div>

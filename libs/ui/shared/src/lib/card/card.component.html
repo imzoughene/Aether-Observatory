@@ -1,0 +1,13 @@
+@if (header) {
+  <div class="card-header">
+    <ng-content select="[cardHeader]"></ng-content>
+  </div>
+}
+<div class="card-body">
+  <ng-content></ng-content>
+</div>
+@if (footer) {
+  <div class="card-footer">
+    <ng-content select="[cardFooter]"></ng-content>
+  </div>
+}

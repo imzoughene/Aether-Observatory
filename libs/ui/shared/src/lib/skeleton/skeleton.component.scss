@@ -1,0 +1,53 @@
+:host {
+  display: block;
+  background: var(--color-surface-alt);
+  position: relative;
+  overflow: hidden;
+}
+
+:host::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-surface) 55%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: aether-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+:host.shape-text {
+  border-radius: 4px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+:host.shape-circular {
+  border-radius: 50%;
+}
+
+:host.shape-rectangular {
+  border-radius: 0;
+}
+
+:host.shape-rounded {
+  border-radius: var(--radius-md);
+}
+
+:host.shape-text.size-sm { height: 0.75rem; }
+:host.shape-text.size-md { height: 1rem; }
+:host.shape-text.size-lg { height: 1.25rem; }
+:host.shape-text.size-xl { height: 1.75rem; }
+
+:host.shape-circular.size-sm { width: 1.5rem; height: 1.5rem; }
+:host.shape-circular.size-md { width: 2.5rem; height: 2.5rem; }
+:host.shape-circular.size-lg { width: 4rem; height: 4rem; }
+:host.shape-circular.size-xl { width: 6rem; height: 6rem; }
+
+@keyframes aether-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1,0 +1,46 @@
+<div class="empty-state-inner">
+  @if (iconSvg) {
+    <div class="icon-wrap" [innerHTML]="iconSvg" aria-hidden="true"></div>
+  } @else if (icon) {
+    <div class="icon-wrap" aria-hidden="true">
+      <span class="icon-emoji">{{ icon }}</span>
+    </div>
+  } @else {
+    <div class="icon-wrap default-icon" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <path d="M9 9h.01M15 9h.01M8 15c1 1.5 2.5 2 4 2s3-.5 4-2" />
+      </svg>
+    </div>
+  }
+
+  @if (title) {
+    <h3 class="title">{{ title }}</h3>
+  }
+  <ng-content select="[emptyTitle]"></ng-content>
+
+  @if (description) {
+    <p class="description">{{ description }}</p>
+  }
+  <ng-content select="[emptyDescription]"></ng-content>
+
+  <ng-content></ng-content>
+
+  @if (actionLabel || hasActionContent) {
+    <div class="actions">
+      <ng-content select="[emptyActions]"></ng-content>
+      @if (actionLabel) {
+        <aether-button (click)="onActionClick()">
+          {{ actionLabel }}
+        </aether-button>
+      }
+    </div>
+  }
+</div>

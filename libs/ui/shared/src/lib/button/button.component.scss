@@ -1,0 +1,123 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
+  text-decoration: none;
+}
+
+:host:disabled,
+:host[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+:host:active:not([aria-disabled='true']) {
+  transform: translateY(1px);
+}
+
+:host:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+:host.size-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+  min-height: 32px;
+}
+
+:host.size-md {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-md);
+  min-height: 40px;
+}
+
+:host.size-lg {
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-lg);
+  min-height: 48px;
+}
+
+:host.variant-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+:host.variant-primary:hover:not([aria-disabled='true']) {
+  background: var(--color-primary-strong);
+  border-color: var(--color-primary-strong);
+}
+
+:host.variant-secondary {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+:host.variant-secondary:hover:not([aria-disabled='true']) {
+  background: var(--color-border);
+}
+
+:host.variant-outline {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+:host.variant-outline:hover:not([aria-disabled='true']) {
+  background: var(--color-surface-alt);
+  border-color: var(--color-text-muted);
+}
+
+:host.variant-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text);
+}
+
+:host.variant-ghost:hover:not([aria-disabled='true']) {
+  background: var(--color-surface-alt);
+}
+
+:host.variant-danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+:host.variant-danger:hover:not([aria-disabled='true']) {
+  filter: brightness(0.92);
+}
+
+.spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: aether-spin 0.7s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes aether-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
