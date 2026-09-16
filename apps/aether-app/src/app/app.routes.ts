@@ -1,9 +1,6 @@
 import { Route } from '@angular/router';
-import {
-	AppShellComponent,
-	DashboardPlaceholderComponent,
-	SettingsPlaceholderComponent,
-} from '../../../../libs/ui-layout/src/index';
+import { AppShellComponent } from '../../../../libs/ui-layout/src/index';
+import { NotFoundComponent } from './not-found.component';
 
 export const appRoutes: Route[] = [
 	{
@@ -11,9 +8,36 @@ export const appRoutes: Route[] = [
 		component: AppShellComponent,
 		children: [
 			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-			{ path: 'dashboard', component: DashboardPlaceholderComponent },
-			{ path: 'settings', component: SettingsPlaceholderComponent },
+			{
+				path: 'dashboard',
+				loadChildren: () =>
+					import('../../../../libs/features/dashboard/src/routes').then(
+						(m) => m.dashboardRoutes
+					),
+			},
+			{
+				path: 'probes',
+				loadChildren: () =>
+					import('../../../../libs/features/probes/src/routes').then(
+						(m) => m.probesRoutes
+					),
+			},
+			{
+				path: 'analytics',
+				loadChildren: () =>
+					import('../../../../libs/features/analytics/src/routes').then(
+						(m) => m.analyticsRoutes
+					),
+			},
+			{
+				path: 'settings',
+				loadChildren: () =>
+					import('../../../../libs/features/settings/src/routes').then(
+						(m) => m.settingsRoutes
+					),
+			},
 		],
 	},
-	{ path: '**', redirectTo: '' },
+	{ path: '404', component: NotFoundComponent },
+	{ path: '**', redirectTo: '/404' },
 ];

@@ -16,7 +16,9 @@ import { RouterModule } from '@angular/router';
       <div class="body">
         <aside class="sidebar" [class.open]="sidebarOpen">
           <nav>
-            <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+            <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+            <a routerLink="/probes" routerLinkActive="active">Probes</a>
+            <a routerLink="/analytics" routerLinkActive="active">Analytics</a>
             <a routerLink="/settings" routerLinkActive="active">Settings</a>
           </nav>
         </aside>
