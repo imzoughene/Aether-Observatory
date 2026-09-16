@@ -1,18 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
-import { NxWelcome } from './nx-welcome';
+import { ThemeService } from '../../../../libs/ui/shared/src/index';
 
-describe('App', () => {
+describe('App theme system', () => {
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
-      imports: [App, NxWelcome],
+      imports: [App],
     }).compileComponents();
   });
 
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Welcome aether-app');
+  it('should initialize the theme in the document and toggle it', () => {
+    const themeService = TestBed.inject(ThemeService);
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(themeService.theme()).toBe('light');
+
+    themeService.toggleTheme();
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(themeService.theme()).toBe('dark');
   });
 });

@@ -1,0 +1,25 @@
+@forward 'tokens';
+@forward 'utilities';
+
+:root {
+  font-family: var(--font-family-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+body {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: inherit;
+}

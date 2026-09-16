@@ -1,0 +1,66 @@
+:root {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-alt: #e2e8f0;
+  --color-surface-strong: #0f172a;
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-border: #cbd5e1;
+  --color-primary: #2563eb;
+  --color-primary-strong: #1d4ed8;
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-shadow: rgba(15, 23, 42, 0.12);
+
+  --font-family-sans: 'Inter', 'Segoe UI', sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 10px 20px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.16);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #020817;
+  --color-surface: #0f172a;
+  --color-surface-alt: #111827;
+  --color-surface-strong: #e2e8f0;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+  --color-primary: #60a5fa;
+  --color-primary-strong: #3b82f6;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-shadow: rgba(15, 23, 42, 0.42);
+
+  color-scheme: dark;
+}

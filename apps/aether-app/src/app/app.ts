@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { ThemeService } from '../../../../libs/ui/shared/src/index';
 
 @Component({
   imports: [RouterModule],
@@ -8,5 +9,12 @@ import { RouterModule } from '@angular/router';
   styleUrl: './app.scss',
 })
 export class App {
-  protected title = 'aether-app';
+  protected readonly themeService = inject(ThemeService);
+  protected readonly theme = this.themeService.theme;
+  protected readonly isDark = this.themeService.isDark;
+  protected readonly tokenSummary = computed(() => this.themeService.tokens());
+
+  protected toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
 }

@@ -1,1 +1,9 @@
-<router-outlet></router-outlet>
+<div class="app-shell-shell">
+  <header class="topbar u-inline">
+    <div class="brand">Aether</div>
+    <button class="theme-toggle u-button" type="button" (click)="toggleTheme()">
+      {{ isDark() ? 'Switch to light' : 'Switch to dark' }}
+    </button>
+  </header>
+  <router-outlet></router-outlet>
+</div>
