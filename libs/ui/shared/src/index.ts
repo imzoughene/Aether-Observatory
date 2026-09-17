@@ -21,3 +21,4 @@ export type { EmptyStateSize } from './lib/empty-state/empty-state.component';
 export * from './lib/error-state/error-state.component';
 export type { ErrorStateSeverity, ErrorStateSize } from './lib/error-state/error-state.component';
 export * from './lib/kpi-card/kpi-card.component';
+export * from './lib/table/data-table.component';

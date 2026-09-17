@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
 
@@ -9,7 +9,7 @@ import { SidebarComponent } from './sidebar.component';
   imports: [HeaderComponent, SidebarComponent, RouterOutlet],
   template: `
     <div class="app-shell">
-      <ui-header (menuToggle)="sidebar.toggle()" />
+      <ui-header (menuToggle)="sidebar.toggle()" (searchChange)="updateSearch($event)" />
 
       <div class="body">
         <ui-sidebar #sidebar />
@@ -22,16 +22,45 @@ import { SidebarComponent } from './sidebar.component';
   `,
   styles: [
     `
-    :host { display: block; height: 100vh; }
-    .app-shell { display:flex; flex-direction:column; height:100%; }
-    .body { display:grid; grid-template-columns: auto 1fr; flex:1; min-height:0; }
-    .content { padding:16px; overflow:auto; background: #f8fafc; }
+      :host {
+        display: block;
+        height: 100vh;
+      }
+      .app-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .body {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        flex: 1;
+        min-height: 0;
+      }
+      .content {
+        padding: 16px;
+        overflow: auto;
+        background: #f8fafc;
+      }
 
-    @media (max-width: 767px) {
-      .body { grid-template-columns: 1fr; }
-      .content { padding:12px; }
-    }
+      @media (max-width: 767px) {
+        .body {
+          grid-template-columns: 1fr;
+        }
+        .content {
+          padding: 12px;
+        }
+      }
     `,
   ],
 })
-export class AppShellComponent {}
+export class AppShellComponent {
+  private readonly router = inject(Router);
+
+  updateSearch(search: string): void {
+    void this.router.navigate([], {
+      queryParams: { search: search.trim() || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+}
