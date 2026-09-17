@@ -24,7 +24,8 @@
     "paths": {
       "@aether/core": ["libs/core/src/index.ts"],
       "@aether/ui-shared": ["libs/ui/shared/src/index.ts"],
-      "@aether/ui-shared/styles": ["libs/ui/shared/src/styles/index.scss"]
+      "@aether/ui-shared/styles": ["libs/ui/shared/src/styles/index.scss"],
+      "@aether/data-models": ["./libs/data/models/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

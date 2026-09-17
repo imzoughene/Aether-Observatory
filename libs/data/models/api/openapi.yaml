@@ -1,0 +1,378 @@
+openapi: 3.1.0
+info:
+  title: Aether Dashboard Mock API
+  version: 1.0.0
+  description: |
+    Contract for the Aether enterprise dashboard mock backend.
+    TypeScript interfaces live in `@aether/data-models`; this spec is the source of truth
+    for HTTP shape when swapping mock → real backend.
+
+servers:
+  - url: /api/v1
+    description: Mock API base (dev proxy or MSW)
+
+tags:
+  - name: probes
+    description: Probe inventory and detail
+  - name: telemetry
+    description: Time-series samples per probe
+  - name: kpis
+    description: Aggregated dashboard KPIs
+
+paths:
+  /probes:
+    get:
+      operationId: listProbes
+      tags: [probes]
+      summary: List probes (paginated)
+      parameters:
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/FilterParam'
+        - $ref: '#/components/parameters/SearchParam'
+      responses:
+        '200':
+          description: Paginated probe summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProbeSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /probes/{id}:
+    get:
+      operationId: getProbeById
+      tags: [probes]
+      summary: Get probe by ID
+      parameters:
+        - $ref: '#/components/parameters/ProbeIdParam'
+      responses:
+        '200':
+          description: Full probe resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Probe'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /telemetry:
+    get:
+      operationId: listTelemetry
+      tags: [telemetry]
+      summary: List telemetry samples for a probe in a time range
+      parameters:
+        - name: probeId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Probe identifier
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Range start (ISO 8601, inclusive)
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Range end (ISO 8601, inclusive)
+        - $ref: '#/components/parameters/OffsetParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paginated telemetry samples
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTelemetrySample'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /kpis:
+    get:
+      operationId: listKpis
+      tags: [kpis]
+      summary: Dashboard KPI tiles
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/KpiCategory'
+      responses:
+        '200':
+          description: KPI collection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Kpi'
+
+components:
+  parameters:
+    OffsetParam:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Zero-based row offset
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size
+    SortParam:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_]+:(asc|desc)$'
+        example: name:asc
+      description: Sort field and direction (`field:asc` or `field:desc`)
+    FilterParam:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        example: '{"status":"active","type":"HTTP"}'
+      description: JSON-encoded field filters
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Free-text search on name/target
+    ProbeIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Probe identifier
+
+  responses:
+    BadRequest:
+      description: Invalid query parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+  schemas:
+    ApiError:
+      type: object
+      required: [statusCode, message]
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+
+    PaginatedResponse:
+      type: object
+      required: [items, total, offset, limit, hasMore]
+      properties:
+        items:
+          type: array
+        total:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+        hasMore:
+          type: boolean
+
+    ProbeStatus:
+      type: string
+      enum: [active, warning, error, inactive]
+
+    ProbeType:
+      type: string
+      enum: [HTTP, TCP, DNS, DB, ICMP]
+
+    Probe:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - type
+        - target
+        - region
+        - intervalSec
+        - timeoutSec
+        - lastCheckAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProbeStatus'
+        type:
+          $ref: '#/components/schemas/ProbeType'
+        target:
+          type: string
+        region:
+          type: string
+        intervalSec:
+          type: integer
+          minimum: 1
+        timeoutSec:
+          type: integer
+          minimum: 1
+        lastCheckAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProbeSummary:
+      type: object
+      required: [id, name, status, type]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProbeStatus'
+        type:
+          $ref: '#/components/schemas/ProbeType'
+        region:
+          type: string
+        lastCheckAt:
+          type: string
+          format: date-time
+
+    PaginatedProbeSummary:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProbeSummary'
+
+    TelemetrySample:
+      type: object
+      required: [id, probeId, timestamp, responseTimeMs, success]
+      properties:
+        id:
+          type: string
+        probeId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        responseTimeMs:
+          type: number
+          minimum: 0
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        errorMessage:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+
+    PaginatedTelemetrySample:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/TelemetrySample'
+
+    KpiTrend:
+      type: string
+      enum: [up, down, stable]
+
+    KpiSeverity:
+      type: string
+      enum: [success, warning, error, neutral]
+
+    KpiCategory:
+      type: string
+      enum: [probes, telemetry, uptime, performance]
+
+    Kpi:
+      type: object
+      required: [id, label, value, category]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        formattedValue:
+          type: string
+        trend:
+          $ref: '#/components/schemas/KpiTrend'
+        trendPercent:
+          type: number
+        severity:
+          $ref: '#/components/schemas/KpiSeverity'
+        category:
+          $ref: '#/components/schemas/KpiCategory'

@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aether.local/schemas/models.schema.json",
+  "title": "Aether Dashboard Models",
+  "description": "Minimal JSON Schema mirror of @aether/data-models for mock validation and codegen",
+  "$defs": {
+    "PaginatedResponse": {
+      "type": "object",
+      "required": ["items", "total", "offset", "limit", "hasMore"],
+      "properties": {
+        "items": { "type": "array" },
+        "total": { "type": "integer", "minimum": 0 },
+        "offset": { "type": "integer", "minimum": 0 },
+        "limit": { "type": "integer", "minimum": 1 },
+        "hasMore": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "FilterParams": {
+      "type": "object",
+      "properties": {
+        "offset": { "type": "integer", "minimum": 0, "default": 0 },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 },
+        "sort": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-zA-Z0-9_]+:(asc|desc)$" },
+            {
+              "type": "object",
+              "required": ["field", "direction"],
+              "properties": {
+                "field": { "type": "string" },
+                "direction": { "enum": ["asc", "desc"] }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "filter": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "array", "items": { "type": "string" } }
+                ]
+              }
+            }
+          ]
+        },
+        "search": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ProbeStatus": {
+      "type": "string",
+      "enum": ["active", "warning", "error", "inactive"]
+    },
+    "ProbeType": {
+      "type": "string",
+      "enum": ["HTTP", "TCP", "DNS", "DB", "ICMP"]
+    },
+    "Probe": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "status",
+        "type",
+        "target",
+        "region",
+        "intervalSec",
+        "timeoutSec",
+        "lastCheckAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "status": { "$ref": "#/$defs/ProbeStatus" },
+        "type": { "$ref": "#/$defs/ProbeType" },
+        "target": { "type": "string" },
+        "region": { "type": "string" },
+        "intervalSec": { "type": "integer", "minimum": 1 },
+        "timeoutSec": { "type": "integer", "minimum": 1 },
+        "lastCheckAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "ProbeSummary": {
+      "type": "object",
+      "required": ["id", "name", "status", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "status": { "$ref": "#/$defs/ProbeStatus" },
+        "type": { "$ref": "#/$defs/ProbeType" },
+        "region": { "type": "string" },
+        "lastCheckAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "TelemetrySample": {
+      "type": "object",
+      "required": ["id", "probeId", "timestamp", "responseTimeMs", "success"],
+      "properties": {
+        "id": { "type": "string" },
+        "probeId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "responseTimeMs": { "type": "number", "minimum": 0 },
+        "success": { "type": "boolean" },
+        "statusCode": { "type": "integer" },
+        "errorMessage": { "type": "string" },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "boolean" }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Kpi": {
+      "type": "object",
+      "required": ["id", "label", "value", "category"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "value": { "type": "number" },
+        "unit": { "type": "string" },
+        "formattedValue": { "type": "string" },
+        "trend": { "enum": ["up", "down", "stable"] },
+        "trendPercent": { "type": "number" },
+        "severity": { "enum": ["success", "warning", "error", "neutral"] },
+        "category": { "enum": ["probes", "telemetry", "uptime", "performance"] }
+      },
+      "additionalProperties": false
+    },
+    "ApiErrorResponse": {
+      "type": "object",
+      "required": ["statusCode", "message"],
+      "properties": {
+        "statusCode": { "type": "integer" },
+        "message": { "type": "string" },
+        "error": { "type": "string" },
+        "details": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
