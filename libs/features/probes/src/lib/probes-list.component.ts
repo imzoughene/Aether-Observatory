@@ -9,14 +9,37 @@ import {
 } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { SearchService, UiStateService } from '@aether/core';
-import { ProbesListQuery, ProbeSummary } from '@aether/data-models';
+import { PaginatedResponse, ProbesListQuery, ProbeSummary } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
-import { GenericTableComponent, TableCellContext, TableColumn, TableSort } from '@aether/ui-shared';
-import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap } from 'rxjs';
+import {
+  ErrorStateComponent,
+  GenericTableComponent,
+  LoadingIndicatorComponent,
+  TableCellContext,
+  TableColumn,
+  TableSort,
+} from '@aether/ui-shared';
+import {
+  Observable,
+  Subject,
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+} from 'rxjs';
+
+type ProbeListState =
+  | { status: 'loading' }
+  | { status: 'data'; data: PaginatedResponse<ProbeSummary> }
+  | { status: 'error'; message: string };
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, GenericTableComponent],
+  imports: [AsyncPipe, ErrorStateComponent, GenericTableComponent, LoadingIndicatorComponent],
   selector: 'aether-probes-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ProbesService],
@@ -28,8 +51,10 @@ import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap 
           <h2>Probes</h2>
           <p class="subtitle">Monitor every endpoint and connection from one place.</p>
         </div>
-        @if (probes$ | async; as result) {
-          <strong class="total">{{ result.total }} total</strong>
+        @if (probes$ | async; as state) {
+          @if (state.status === 'data') {
+            <strong class="total">{{ state.data.total }} total</strong>
+          }
         }
       </header>
 
@@ -87,38 +112,52 @@ import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap 
         </aside>
 
         <div class="results">
-          @if (probes$ | async; as result) {
-            <div class="results-toolbar">
-              <span>{{ result.items.length }} of {{ result.total }} probes</span>
-              <div class="pagination">
-                <button
-                  type="button"
-                  [disabled]="uiState.currentFilters().page === 0"
-                  (click)="previousPage()"
-                >
-                  Previous
-                </button>
-                <span>Page {{ uiState.currentFilters().page + 1 }}</span>
-                <button type="button" [disabled]="!result.hasMore" (click)="nextPage()">
-                  Next
-                </button>
-              </div>
-            </div>
-            <ng-template #healthCell let-value="value">
-              <strong [class]="'health health-' + value">{{ value }}</strong>
-            </ng-template>
-            <ui-generic-table
-              [columns]="columns()"
-              [rows]="result.items"
-              [sort]="sortState()"
-              [rowActions]="rowActions"
-              emptyMessage="No probes match these filters."
-              (sortChange)="setTableSort($event)"
-              (rowSelected)="selectProbe($event)"
-              (action)="handleAction($event)"
-            />
-          } @else {
-            <p class="loading">Loading probes...</p>
+          @if (probes$ | async; as state) {
+            @switch (state.status) {
+              @case ('loading') {
+                <aether-loading-indicator variant="skeleton" label="Loading probes..." />
+              }
+              @case ('error') {
+                <aether-error-state
+                  title="Unable to load probes"
+                  [message]="state.message"
+                  retryLabel="Retry"
+                  (retry)="refresh()"
+                />
+              }
+              @case ('data') {
+                @let result = state.data;
+                <div class="results-toolbar">
+                  <span>{{ result.items.length }} of {{ result.total }} probes</span>
+                  <div class="pagination">
+                    <button
+                      type="button"
+                      [disabled]="uiState.currentFilters().page === 0"
+                      (click)="previousPage()"
+                    >
+                      Previous
+                    </button>
+                    <span>Page {{ uiState.currentFilters().page + 1 }}</span>
+                    <button type="button" [disabled]="!result.hasMore" (click)="nextPage()">
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <ng-template #healthCell let-value="value">
+                  <strong [class]="'health health-' + value">{{ value }}</strong>
+                </ng-template>
+                <ui-generic-table
+                  [columns]="columns()"
+                  [rows]="result.items"
+                  [sort]="sortState()"
+                  [rowActions]="rowActions"
+                  emptyMessage="No probes match these filters."
+                  (sortChange)="setTableSort($event)"
+                  (rowSelected)="selectProbe($event)"
+                  (action)="handleAction($event)"
+                />
+              }
+            }
           }
         </div>
       </div>
@@ -238,11 +277,6 @@ import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap 
         cursor: not-allowed;
         opacity: 0.45;
       }
-      .loading {
-        padding: 32px;
-        color: #64748b;
-        text-align: center;
-      }
       .health {
         font-size: 12px;
       }
@@ -285,6 +319,7 @@ export class ProbesListComponent {
   private readonly searchService = inject(SearchService);
   readonly uiState = inject(UiStateService);
   readonly pageSize = 20;
+  private readonly refresh$ = new Subject<void>();
   private readonly healthCell =
     viewChild<TemplateRef<TableCellContext<ProbeSummary>>>('healthCell');
   readonly rowActions = [{ label: 'Open', action: 'open' }] as const;
@@ -313,9 +348,10 @@ export class ProbesListComponent {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  readonly probes$ = combineLatest({
+  readonly probes$: Observable<ProbeListState> = combineLatest({
     query: this.searchService.query$,
     filter: this.filter$,
+    refresh: this.refresh$.pipe(startWith(undefined)),
   }).pipe(
     switchMap(({ query, filter }) => {
       const status = filter.health || filter.status;
@@ -329,10 +365,23 @@ export class ProbesListComponent {
           ...(filter.type ? { type: filter.type } : {}),
         }),
       };
-      return this.probesService.list(request);
+      return this.probesService.list(request).pipe(
+        map((data): ProbeListState => ({ status: 'data', data })),
+        startWith<ProbeListState>({ status: 'loading' }),
+        catchError(() =>
+          of<ProbeListState>({
+            status: 'error',
+            message: 'The probes could not be loaded. Please try again.',
+          })
+        )
+      );
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );
+
+  refresh(): void {
+    this.refresh$.next();
+  }
 
   selectValue(event: Event): string {
     return (event.target as HTMLSelectElement).value;

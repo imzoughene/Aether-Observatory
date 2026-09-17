@@ -15,6 +15,12 @@ export * from './lib/skeleton/skeleton-text.component';
 export type { SkeletonTextLineConfig } from './lib/skeleton/skeleton-text.component';
 export * from './lib/skeleton/skeleton-card.component';
 
+export * from './lib/loading-indicator/loading-indicator.component';
+export type {
+  LoadingIndicatorSize,
+  LoadingIndicatorVariant,
+} from './lib/loading-indicator/loading-indicator.component';
+
 export * from './lib/empty-state/empty-state.component';
 export type { EmptyStateSize } from './lib/empty-state/empty-state.component';
 

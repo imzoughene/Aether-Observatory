@@ -7,6 +7,7 @@ import {
   Output,
   TemplateRef,
 } from '@angular/core';
+import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
 export type TableKey<T> = Extract<keyof T, string>;
 
@@ -39,67 +40,71 @@ export interface TableRowAction<T> {
   standalone: true,
   selector: 'ui-generic-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, EmptyStateComponent],
   template: `
     <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            @for (column of columns; track column.key) {
-              <th scope="col" [attr.aria-sort]="ariaSort(column)">
-                @if (column.sortable) {
-                  <button type="button" class="sort-button" (click)="sortBy(column)">
-                    {{ column.label }}
-                    <span aria-hidden="true">{{ sortIndicator(column) }}</span>
-                  </button>
-                } @else {
-                  {{ column.label }}
-                }
-              </th>
-            }
-            @if (rowActions.length) {
-              <th scope="col">Actions</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track trackBy($index, row)) {
-            <tr [class.selected]="isSelected(row)" (click)="select(row)">
+      @if (rows.length) {
+        <table>
+          <thead>
+            <tr>
               @for (column of columns; track column.key) {
-                <td>
-                  @if (column.cellTemplate) {
-                    <ng-container
-                      [ngTemplateOutlet]="column.cellTemplate"
-                      [ngTemplateOutletContext]="cellContext(row, column)"
-                    />
+                <th scope="col" [attr.aria-sort]="ariaSort(column)">
+                  @if (column.sortable) {
+                    <button type="button" class="sort-button" (click)="sortBy(column)">
+                      {{ column.label }}
+                      <span aria-hidden="true">{{ sortIndicator(column) }}</span>
+                    </button>
                   } @else {
-                    {{ cellValue(row, column) }}
+                    {{ column.label }}
                   }
-                </td>
+                </th>
               }
               @if (rowActions.length) {
-                <td class="actions" (click)="$event.stopPropagation()">
-                  @for (rowAction of rowActions; track rowAction.action) {
-                    <button
-                      type="button"
-                      [disabled]="rowAction.disabled?.(row) ?? false"
-                      (click)="triggerAction(rowAction, row)"
-                    >
-                      {{ rowAction.label }}
-                    </button>
-                  }
-                </td>
+                <th scope="col">Actions</th>
               }
             </tr>
-          } @empty {
-            <tr>
-              <td class="empty" [attr.colspan]="columns.length + (rowActions.length ? 1 : 0)">
-                {{ emptyMessage }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (row of rows; track trackBy($index, row)) {
+              <tr [class.selected]="isSelected(row)" (click)="select(row)">
+                @for (column of columns; track column.key) {
+                  <td>
+                    @if (column.cellTemplate) {
+                      <ng-container
+                        [ngTemplateOutlet]="column.cellTemplate"
+                        [ngTemplateOutletContext]="cellContext(row, column)"
+                      />
+                    } @else {
+                      {{ cellValue(row, column) }}
+                    }
+                  </td>
+                }
+                @if (rowActions.length) {
+                  <td class="actions" (click)="$event.stopPropagation()">
+                    @for (rowAction of rowActions; track rowAction.action) {
+                      <button
+                        type="button"
+                        [disabled]="rowAction.disabled?.(row) ?? false"
+                        (click)="triggerAction(rowAction, row)"
+                      >
+                        {{ rowAction.label }}
+                      </button>
+                    }
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty" [attr.colspan]="columns.length + (rowActions.length ? 1 : 0)">
+                  {{ emptyMessage }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <aether-empty-state [description]="emptyMessage" size="sm" />
+      }
     </div>
   `,
   styles: [

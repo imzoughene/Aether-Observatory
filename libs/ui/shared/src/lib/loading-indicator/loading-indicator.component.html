@@ -1,0 +1,9 @@
+@if (variant === 'spinner') {
+  <span class="spinner" aria-hidden="true"></span>
+  <span class="label">{{ label }}</span>
+} @else {
+  <div class="skeleton-lines" aria-hidden="true">
+    <aether-skeleton-text [lines]="skeletonLines" />
+  </div>
+  <span class="visually-hidden">{{ label }}</span>
+}

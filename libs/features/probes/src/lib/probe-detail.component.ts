@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@ang
 import { UiStateService } from '@aether/core';
 import { Probe } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
+import { ErrorStateComponent, LoadingIndicatorComponent } from '@aether/ui-shared';
 import {
   Observable,
   Subject,
@@ -23,7 +24,14 @@ export type ProbeDetailState =
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [
+    AsyncPipe,
+    ErrorStateComponent,
+    LoadingIndicatorComponent,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+  ],
   selector: 'aether-probe-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ProbeDetailContext],
@@ -33,14 +41,15 @@ export type ProbeDetailState =
       @if (detail$ | async; as state) {
         @switch (state.status) {
           @case ('loading') {
-            <div class="state-panel" role="status">Loading probe details...</div>
+            <aether-loading-indicator label="Loading probe details..." />
           }
           @case ('error') {
-            <div class="state-panel error-panel" role="alert">
-              <h2>Unable to load this probe</h2>
-              <p>{{ state.message }}</p>
-              <button type="button" (click)="refresh()">Refresh</button>
-            </div>
+            <aether-error-state
+              title="Unable to load this probe"
+              [message]="state.message"
+              retryLabel="Refresh"
+              (retry)="refresh()"
+            />
           }
           @case ('loaded') {
             <header class="detail-header">
@@ -88,8 +97,7 @@ export type ProbeDetailState =
         text-decoration: underline;
       }
       .detail-header,
-      .tabs,
-      .state-panel {
+      .tabs {
         background: #fff;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
@@ -140,21 +148,6 @@ export type ProbeDetailState =
         cursor: pointer;
         font: inherit;
         font-size: 13px;
-      }
-      .state-panel {
-        padding: 32px;
-        color: #475569;
-      }
-      .error-panel {
-        border-color: #fecaca;
-        background: #fff7f7;
-      }
-      .error-panel h2 {
-        margin-bottom: 8px;
-        font-size: 20px;
-      }
-      .error-panel p {
-        margin: 0 0 16px;
       }
       @media (max-width: 540px) {
         .detail-header {
