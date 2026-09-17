@@ -1,8 +1,9 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { ProbesListQuery, ProbeSummary, SortParam } from '@aether/data-models';
+import { UiStateService } from '@aether/core';
+import { ProbesListQuery, ProbeSummary } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
 import { DataTableComponent, DataTableColumn, DataTableRow } from '@aether/ui-shared';
 import {
@@ -42,7 +43,10 @@ import {
           </div>
           <label>
             Status
-            <select [value]="statusFilter()" (change)="setFilter('status', $event)">
+            <select
+              [value]="uiState.currentFilters().status"
+              (change)="setFilter('status', $event)"
+            >
               <option value="">All statuses</option>
               <option value="active">Active</option>
               <option value="warning">Warning</option>
@@ -52,7 +56,7 @@ import {
           </label>
           <label>
             Mission type
-            <select [value]="typeFilter()" (change)="setFilter('type', $event)">
+            <select [value]="uiState.currentFilters().type" (change)="setFilter('type', $event)">
               <option value="">All types</option>
               <option value="HTTP">HTTP</option>
               <option value="TCP">TCP</option>
@@ -63,7 +67,10 @@ import {
           </label>
           <label>
             Health
-            <select [value]="healthFilter()" (change)="setFilter('health', $event)">
+            <select
+              [value]="uiState.currentFilters().health"
+              (change)="setFilter('health', $event)"
+            >
               <option value="">All health states</option>
               <option value="active">Healthy</option>
               <option value="warning">Degraded</option>
@@ -86,10 +93,14 @@ import {
             <div class="results-toolbar">
               <span>{{ result.items.length }} of {{ result.total }} probes</span>
               <div class="pagination">
-                <button type="button" [disabled]="page() === 0" (click)="previousPage()">
+                <button
+                  type="button"
+                  [disabled]="uiState.currentFilters().page === 0"
+                  (click)="previousPage()"
+                >
                   Previous
                 </button>
-                <span>Page {{ page() + 1 }}</span>
+                <span>Page {{ uiState.currentFilters().page + 1 }}</span>
                 <button type="button" [disabled]="!result.hasMore" (click)="nextPage()">
                   Next
                 </button>
@@ -247,11 +258,7 @@ import {
 export class ProbesListComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly probesService = inject(ProbesService);
-  readonly statusFilter = signal('');
-  readonly typeFilter = signal('');
-  readonly healthFilter = signal('');
-  readonly sort = signal<SortParam>({ field: 'name', direction: 'asc' });
-  readonly page = signal(0);
+  readonly uiState = inject(UiStateService);
   readonly pageSize = 20;
   readonly columns: readonly DataTableColumn[] = [
     { key: 'name', label: 'Probe' },
@@ -262,18 +269,11 @@ export class ProbesListComponent {
     { key: 'lastCheckAt', label: 'Last check' },
   ];
 
-  private readonly filter$ = combineLatest({
-    status: toObservable(this.statusFilter).pipe(startWith(''), distinctUntilChanged()),
-    type: toObservable(this.typeFilter).pipe(startWith(''), distinctUntilChanged()),
-    health: toObservable(this.healthFilter).pipe(startWith(''), distinctUntilChanged()),
-    sort: toObservable(this.sort).pipe(
-      startWith(this.sort()),
-      distinctUntilChanged(
-        (left, right) => left.field === right.field && left.direction === right.direction
-      )
-    ),
-    page: toObservable(this.page).pipe(startWith(0), distinctUntilChanged()),
-  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+  private readonly filter$ = toObservable(this.uiState.currentFilters).pipe(
+    startWith(this.uiState.currentFilters()),
+    distinctUntilChanged(),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   readonly probes$ = combineLatest({
     query: this.route.queryParamMap.pipe(
@@ -306,42 +306,32 @@ export class ProbesListComponent {
   }
 
   sortValue(): string {
-    return `${this.sort().field}:${this.sort().direction}`;
+    const sort = this.uiState.currentFilters().sort;
+    return `${sort.field}:${sort.direction}`;
   }
 
   setSort(value: string): void {
     const [field, direction] = value.split(':');
     if ((direction === 'asc' || direction === 'desc') && field) {
-      this.sort.set({ field, direction });
-      this.page.set(0);
+      this.uiState.setSort({ field, direction });
     }
   }
 
   setFilter(filter: 'status' | 'type' | 'health', event: Event): void {
     const value = this.selectValue(event);
-    if (filter === 'status') {
-      this.statusFilter.set(value);
-    } else if (filter === 'type') {
-      this.typeFilter.set(value);
-    } else {
-      this.healthFilter.set(value);
-    }
-    this.page.set(0);
+    this.uiState.setFilter(filter, value);
   }
 
   clearFilters(): void {
-    this.statusFilter.set('');
-    this.typeFilter.set('');
-    this.healthFilter.set('');
-    this.page.set(0);
+    this.uiState.clearFilters();
   }
 
   previousPage(): void {
-    this.page.update((value) => Math.max(0, value - 1));
+    this.uiState.setPage(this.uiState.currentFilters().page - 1);
   }
 
   nextPage(): void {
-    this.page.update((value) => value + 1);
+    this.uiState.setPage(this.uiState.currentFilters().page + 1);
   }
 
   toRows(items: readonly ProbeSummary[]): readonly DataTableRow[] {

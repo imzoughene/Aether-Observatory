@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { UiStateService } from '@aether/core';
 import { Probe } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
 import {
@@ -171,6 +172,7 @@ export class ProbeDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly probesService = inject(ProbesService);
   private readonly context = inject(ProbeDetailContext);
+  private readonly uiState = inject(UiStateService);
   private readonly refresh$ = new Subject<void>();
 
   readonly detail$: Observable<ProbeDetailState> = combineLatest({
@@ -182,11 +184,15 @@ export class ProbeDetailComponent {
         return of<ProbeDetailState>({ status: 'error', message: 'Probe id is missing.' });
       }
       return this.probesService.getById(id).pipe(
-        tap((probe) => this.context.probe.set(probe)),
+        tap((probe) => {
+          this.context.probe.set(probe);
+          this.uiState.selectProbe(probe.id);
+        }),
         map((probe): ProbeDetailState => ({ status: 'loaded', probe })),
         startWith<ProbeDetailState>({ status: 'loading' }),
         catchError(() => {
           this.context.probe.set(null);
+          this.uiState.selectProbe(null);
           return of<ProbeDetailState>({
             status: 'error',
             message: 'The probe could not be loaded. Please try again.',
