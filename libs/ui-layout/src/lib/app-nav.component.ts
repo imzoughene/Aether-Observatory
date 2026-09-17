@@ -18,19 +18,43 @@ type NavItem = {
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+          ariaCurrentWhenActive="page"
+          [attr.aria-label]="item.label + ' navigation link'"
         >
           {{ item.label }}
         </a>
       }
     </nav>
   `,
-  styles: [`
-    :host { display: block; }
-    nav { display: flex; flex-direction: column; gap: 8px; }
-    a { color: inherit; text-decoration: none; padding: 10px 12px; border-radius: 6px; }
-    a:hover, a:focus-visible { background: rgba(255, 255, 255, 0.1); outline: none; }
-    a.active { background: rgba(255, 255, 255, 0.14); color: #fff; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+      nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      a {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 6px;
+      }
+      a:hover,
+      a:focus-visible {
+        background: rgba(255, 255, 255, 0.12);
+        outline: 2px solid #93c5fd;
+        outline-offset: 2px;
+      }
+      a.active {
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+      }
+    `,
+  ],
 })
 export class AppNavComponent {
   readonly items: readonly NavItem[] = [

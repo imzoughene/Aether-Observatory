@@ -66,7 +66,15 @@ export interface TableRowAction<T> {
           </thead>
           <tbody>
             @for (row of rows; track trackBy($index, row)) {
-              <tr [class.selected]="isSelected(row)" (click)="select(row)">
+              <tr
+                [class.selected]="isSelected(row)"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="rowLabel(row)"
+                [attr.aria-selected]="isSelected(row)"
+                (click)="select(row)"
+                (keydown)="handleRowKeydown($event, row)"
+              >
                 @for (column of columns; track column.key) {
                   <td>
                     @if (column.cellTemplate) {
@@ -85,6 +93,7 @@ export interface TableRowAction<T> {
                       <button
                         type="button"
                         [disabled]="rowAction.disabled?.(row) ?? false"
+                        [attr.aria-label]="rowAction.label + ' ' + rowLabel(row)"
                         (click)="triggerAction(rowAction, row)"
                       >
                         {{ rowAction.label }}
@@ -141,6 +150,11 @@ export interface TableRowAction<T> {
       }
       tbody tr {
         cursor: pointer;
+      }
+      tbody tr:focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: -2px;
+        box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.2);
       }
       tbody tr:hover,
       tbody tr.selected {
@@ -225,6 +239,19 @@ export class GenericTableComponent<T extends object> {
 
   isSelected(row: T): boolean {
     return this.selectedRow === row;
+  }
+
+  handleRowKeydown(event: KeyboardEvent, row: T): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.select(row);
+    }
+  }
+
+  rowLabel(row: T): string {
+    const firstColumn = this.columns[0];
+    const fallback = firstColumn ? this.cellValue(row, firstColumn) : 'row';
+    return `Select ${String(fallback ?? 'row')}`;
   }
 
   select(row: T): void {

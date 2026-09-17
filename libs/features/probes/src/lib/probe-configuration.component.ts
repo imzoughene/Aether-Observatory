@@ -46,17 +46,29 @@ type FormStatus = 'idle' | 'saving' | 'success' | 'error';
         <div class="form-grid">
           <label [class.invalid]="showError('name')">
             Name <span>*</span>
-            <input formControlName="name" autocomplete="off" />
+            <input
+              formControlName="name"
+              autocomplete="off"
+              [attr.aria-invalid]="showError('name') || null"
+              [attr.aria-describedby]="
+                showError('name') ? 'name-error' : form.controls.name.pending ? 'name-hint' : null
+              "
+            />
             @if (showError('name')) {
-              <small class="error">{{ errorMessage('name') }}</small>
+              <small id="name-error" class="error">{{ errorMessage('name') }}</small>
             } @else if (form.controls.name.pending) {
-              <small class="hint">Checking name availability...</small>
+              <small id="name-hint" class="hint">Checking name availability...</small>
             }
           </label>
 
           <label>
             Probe type <span>*</span>
-            <select formControlName="type">
+            <select
+              formControlName="type"
+              [attr.aria-invalid]="
+                form.controls.type.invalid && form.controls.type.touched ? true : null
+              "
+            >
               <option value="HTTP">HTTP</option>
               <option value="TCP">TCP</option>
               <option value="DNS">DNS</option>
@@ -67,35 +79,67 @@ type FormStatus = 'idle' | 'saving' | 'success' | 'error';
 
           <label class="wide" [class.invalid]="showError('target')">
             Target <span>*</span>
-            <input formControlName="target" placeholder="https://api.example.com/health" />
+            <input
+              formControlName="target"
+              placeholder="https://api.example.com/health"
+              [attr.aria-invalid]="showError('target') || null"
+              [attr.aria-describedby]="showError('target') ? 'target-error' : null"
+            />
             @if (showError('target')) {
-              <small class="error">{{ errorMessage('target') }}</small>
+              <small id="target-error" class="error">{{ errorMessage('target') }}</small>
             }
           </label>
 
           <label [class.invalid]="showError('region')">
             Region <span>*</span>
-            <input formControlName="region" placeholder="eu-west-1" />
+            <input
+              formControlName="region"
+              placeholder="eu-west-1"
+              [attr.aria-invalid]="showError('region') || null"
+              [attr.aria-describedby]="showError('region') ? 'region-error' : null"
+            />
             @if (showError('region')) {
-              <small class="error">{{ errorMessage('region') }}</small>
+              <small id="region-error" class="error">{{ errorMessage('region') }}</small>
             }
           </label>
 
           <label [class.invalid]="showError('intervalSec')">
             Check interval <span>*</span>
-            <input type="number" formControlName="intervalSec" min="10" max="3600" />
-            <small class="hint">10 to 3600 seconds</small>
+            <input
+              type="number"
+              formControlName="intervalSec"
+              min="10"
+              max="3600"
+              [attr.aria-invalid]="showError('intervalSec') || null"
+              [attr.aria-describedby]="
+                showError('intervalSec') ? 'interval-error' : 'interval-hint'
+              "
+            />
+            <small id="interval-hint" class="hint">10 to 3600 seconds</small>
             @if (showError('intervalSec')) {
-              <small class="error">{{ errorMessage('intervalSec') }}</small>
+              <small id="interval-error" class="error">{{ errorMessage('intervalSec') }}</small>
             }
           </label>
 
           <label [class.invalid]="showError('timeoutSec') || form.hasError('timeoutTooLong')">
             Timeout <span>*</span>
-            <input type="number" formControlName="timeoutSec" min="1" max="60" />
-            <small class="hint">Must be shorter than the interval</small>
+            <input
+              type="number"
+              formControlName="timeoutSec"
+              min="1"
+              max="60"
+              [attr.aria-invalid]="
+                showError('timeoutSec') || form.hasError('timeoutTooLong') || null
+              "
+              [attr.aria-describedby]="
+                showError('timeoutSec') || form.hasError('timeoutTooLong')
+                  ? 'timeout-error'
+                  : 'timeout-hint'
+              "
+            />
+            <small id="timeout-hint" class="hint">Must be shorter than the interval</small>
             @if (showError('timeoutSec') || form.hasError('timeoutTooLong')) {
-              <small class="error">{{ errorMessage('timeoutSec') }}</small>
+              <small id="timeout-error" class="error">{{ errorMessage('timeoutSec') }}</small>
             }
           </label>
         </div>
@@ -294,6 +338,7 @@ export class ProbeConfigurationComponent {
   submit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid || this.form.pending) {
+      this.focusFirstInvalidControl();
       return;
     }
 
@@ -333,6 +378,20 @@ export class ProbeConfigurationComponent {
     if (controlName === 'timeoutSec' && this.form.hasError('timeoutTooLong'))
       return 'Timeout must be shorter than the interval.';
     return 'Check this value.';
+  }
+
+  private focusFirstInvalidControl(): void {
+    const firstInvalidControl = Object.keys(this.form.controls).find((key) => {
+      const control = this.form.controls[key as keyof ProbeConfigurationForm];
+      return control.invalid && (control.touched || control.dirty);
+    });
+
+    if (!firstInvalidControl) return;
+
+    const input = document.querySelector<HTMLInputElement | HTMLSelectElement>(
+      `[formControlName="${firstInvalidControl}"]`
+    );
+    input?.focus();
   }
 
   private readonly timeoutValidator = (control: AbstractControl): ValidationErrors | null => {

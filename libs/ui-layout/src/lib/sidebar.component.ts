@@ -20,7 +20,7 @@ import { AppNavComponent } from './app-nav.component';
           (click)="toggle()"
           [attr.aria-expanded]="uiState.sidebarOpen()"
           aria-controls="primary-navigation"
-          aria-label="Toggle sidebar"
+          [attr.aria-label]="uiState.sidebarOpen() ? 'Collapse sidebar' : 'Expand sidebar'"
         >
           <span aria-hidden="true">{{ uiState.sidebarOpen() ? '<' : '>' }}</span>
         </button>
@@ -86,6 +86,11 @@ import { AppNavComponent } from './app-nav.component';
       }
       .navigation {
         min-width: 0;
+      }
+      .navigation:focus-within {
+        outline: 2px solid rgba(147, 197, 253, 0.7);
+        outline-offset: 2px;
+        border-radius: 6px;
       }
       :host.collapsed .sidebar-label {
         display: none;

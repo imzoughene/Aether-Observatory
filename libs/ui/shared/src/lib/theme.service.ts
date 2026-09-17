@@ -15,10 +15,11 @@ export class ThemeService {
     background: this.isDark() ? '#020817' : '#f8fafc',
     surface: this.isDark() ? '#0f172a' : '#ffffff',
     surfaceAlt: this.isDark() ? '#111827' : '#e2e8f0',
-    primary: '#2563eb',
-    text: this.isDark() ? '#e2e8f0' : '#0f172a',
-    textMuted: this.isDark() ? '#94a3b8' : '#475569',
-    border: this.isDark() ? '#334155' : '#cbd5e1',
+    primary: this.isDark() ? '#7dd3fc' : '#0f766e',
+    text: this.isDark() ? '#f8fafc' : '#0f172a',
+    textMuted: this.isDark() ? '#cbd5e1' : '#475569',
+    border: this.isDark() ? '#475569' : '#cbd5e1',
+    focus: this.isDark() ? '#7dd3fc' : '#0f766e',
   }));
 
   constructor() {
@@ -46,9 +47,10 @@ export class ThemeService {
       return savedTheme;
     }
 
-    const mediaQuery = typeof window.matchMedia === 'function'
-      ? window.matchMedia('(prefers-color-scheme: dark)')
-      : null;
+    const mediaQuery =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-color-scheme: dark)')
+        : null;
 
     return mediaQuery?.matches ? 'dark' : 'light';
   }
