@@ -2,10 +2,18 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { ProbesListQuery, ProbeSummary } from '@aether/data-models';
+import { ProbesListQuery, ProbeSummary, SortParam } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
 import { DataTableComponent, DataTableColumn, DataTableRow } from '@aether/ui-shared';
-import { combineLatest, distinctUntilChanged, map, shareReplay, startWith, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  shareReplay,
+  startWith,
+  switchMap,
+} from 'rxjs';
 
 @Component({
   standalone: true,
@@ -34,7 +42,7 @@ import { combineLatest, distinctUntilChanged, map, shareReplay, startWith, switc
           </div>
           <label>
             Status
-            <select [value]="statusFilter()" (change)="statusFilter.set(selectValue($event))">
+            <select [value]="statusFilter()" (change)="setFilter('status', $event)">
               <option value="">All statuses</option>
               <option value="active">Active</option>
               <option value="warning">Warning</option>
@@ -44,7 +52,7 @@ import { combineLatest, distinctUntilChanged, map, shareReplay, startWith, switc
           </label>
           <label>
             Mission type
-            <select [value]="typeFilter()" (change)="typeFilter.set(selectValue($event))">
+            <select [value]="typeFilter()" (change)="setFilter('type', $event)">
               <option value="">All types</option>
               <option value="HTTP">HTTP</option>
               <option value="TCP">TCP</option>
@@ -55,11 +63,20 @@ import { combineLatest, distinctUntilChanged, map, shareReplay, startWith, switc
           </label>
           <label>
             Health
-            <select [value]="healthFilter()" (change)="healthFilter.set(selectValue($event))">
+            <select [value]="healthFilter()" (change)="setFilter('health', $event)">
               <option value="">All health states</option>
               <option value="active">Healthy</option>
               <option value="warning">Degraded</option>
               <option value="error">Critical</option>
+            </select>
+          </label>
+          <label>
+            Sort by
+            <select [value]="sortValue()" (change)="setSort(selectValue($event))">
+              <option value="name:asc">Name (A-Z)</option>
+              <option value="name:desc">Name (Z-A)</option>
+              <option value="status:asc">Status</option>
+              <option value="lastCheckAt:desc">Last check (newest)</option>
             </select>
           </label>
         </aside>
@@ -233,6 +250,7 @@ export class ProbesListComponent {
   readonly statusFilter = signal('');
   readonly typeFilter = signal('');
   readonly healthFilter = signal('');
+  readonly sort = signal<SortParam>({ field: 'name', direction: 'asc' });
   readonly page = signal(0);
   readonly pageSize = 20;
   readonly columns: readonly DataTableColumn[] = [
@@ -245,16 +263,24 @@ export class ProbesListComponent {
   ];
 
   private readonly filter$ = combineLatest({
-    status: toObservable(this.statusFilter).pipe(startWith('')),
-    type: toObservable(this.typeFilter).pipe(startWith('')),
-    health: toObservable(this.healthFilter).pipe(startWith('')),
-    page: toObservable(this.page).pipe(startWith(0)),
-  });
+    status: toObservable(this.statusFilter).pipe(startWith(''), distinctUntilChanged()),
+    type: toObservable(this.typeFilter).pipe(startWith(''), distinctUntilChanged()),
+    health: toObservable(this.healthFilter).pipe(startWith(''), distinctUntilChanged()),
+    sort: toObservable(this.sort).pipe(
+      startWith(this.sort()),
+      distinctUntilChanged(
+        (left, right) => left.field === right.field && left.direction === right.direction
+      )
+    ),
+    page: toObservable(this.page).pipe(startWith(0), distinctUntilChanged()),
+  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   readonly probes$ = combineLatest({
     query: this.route.queryParamMap.pipe(
       map((params) => params.get('search')?.trim() ?? ''),
-      distinctUntilChanged()
+      debounceTime(150),
+      distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: true })
     ),
     filter: this.filter$,
   }).pipe(
@@ -264,6 +290,7 @@ export class ProbesListComponent {
         offset: filter.page * this.pageSize,
         limit: this.pageSize,
         search: query,
+        sort: filter.sort,
         filter: JSON.stringify({
           ...(status ? { status } : {}),
           ...(filter.type ? { type: filter.type } : {}),
@@ -276,6 +303,30 @@ export class ProbesListComponent {
 
   selectValue(event: Event): string {
     return (event.target as HTMLSelectElement).value;
+  }
+
+  sortValue(): string {
+    return `${this.sort().field}:${this.sort().direction}`;
+  }
+
+  setSort(value: string): void {
+    const [field, direction] = value.split(':');
+    if ((direction === 'asc' || direction === 'desc') && field) {
+      this.sort.set({ field, direction });
+      this.page.set(0);
+    }
+  }
+
+  setFilter(filter: 'status' | 'type' | 'health', event: Event): void {
+    const value = this.selectValue(event);
+    if (filter === 'status') {
+      this.statusFilter.set(value);
+    } else if (filter === 'type') {
+      this.typeFilter.set(value);
+    } else {
+      this.healthFilter.set(value);
+    }
+    this.page.set(0);
   }
 
   clearFilters(): void {
