@@ -1,20 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
-import { UiStateService } from '@aether/core';
+import { SearchService, UiStateService } from '@aether/core';
 import { ProbesListQuery, ProbeSummary } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
 import { DataTableComponent, DataTableColumn, DataTableRow } from '@aether/ui-shared';
-import {
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  shareReplay,
-  startWith,
-  switchMap,
-} from 'rxjs';
+import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -256,8 +247,8 @@ import {
   ],
 })
 export class ProbesListComponent {
-  private readonly route = inject(ActivatedRoute);
   private readonly probesService = inject(ProbesService);
+  private readonly searchService = inject(SearchService);
   readonly uiState = inject(UiStateService);
   readonly pageSize = 20;
   readonly columns: readonly DataTableColumn[] = [
@@ -276,12 +267,7 @@ export class ProbesListComponent {
   );
 
   readonly probes$ = combineLatest({
-    query: this.route.queryParamMap.pipe(
-      map((params) => params.get('search')?.trim() ?? ''),
-      debounceTime(150),
-      distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true })
-    ),
+    query: this.searchService.query$,
     filter: this.filter$,
   }).pipe(
     switchMap(({ query, filter }) => {

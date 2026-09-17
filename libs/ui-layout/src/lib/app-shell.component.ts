@@ -1,5 +1,7 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { SearchService } from '@aether/core';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
 
@@ -55,9 +57,18 @@ import { SidebarComponent } from './sidebar.component';
   ],
 })
 export class AppShellComponent {
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly searchService = inject(SearchService);
+
+  constructor() {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe((params) => this.searchService.setQuery(params.get('search') ?? ''));
+  }
 
   updateSearch(search: string): void {
+    this.searchService.setQuery(search);
     void this.router.navigate([], {
       queryParams: { search: search.trim() || null },
       queryParamsHandling: 'merge',
