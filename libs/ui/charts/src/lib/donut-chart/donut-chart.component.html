@@ -1,0 +1,15 @@
+@if (hasData()) {
+  <apx-chart
+    [series]="apexSeries()"
+    [chart]="chartOptions()"
+    [labels]="labels()"
+    [colors]="colors()"
+    [plotOptions]="plotOptions()"
+    [legend]="legend()"
+    [dataLabels]="dataLabels()"
+    [tooltip]="tooltip()"
+    [responsive]="responsive()"
+  />
+} @else {
+  <div class="chart-empty" role="status">No data available</div>
+}
