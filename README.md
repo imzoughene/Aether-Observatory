@@ -8,16 +8,16 @@ Fournir une base applicative scalable pour un dashboard entreprise : routing, st
 
 ## Stack technique
 
-| Domaine | Technologies |
-|--------|----------------|
-| Framework | [Angular](https://angular.dev) 22 (standalone, `OnPush` par défaut via générateurs Nx) |
-| Monorepo | [Nx](https://nx.dev) 23 |
-| Réactivité | Angular Signals, [RxJS](https://rxjs.dev) 7.8 |
-| Langage | TypeScript 6 (mode strict) |
-| Styles | SCSS |
-| Tests unitaires | Jest (`jest-preset-angular`) |
-| Qualité | ESLint, Prettier |
-| Build / dev server | `@angular/build` (application builder) |
+| Domaine            | Technologies                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| Framework          | [Angular](https://angular.dev) 22 (standalone, `OnPush` par défaut via générateurs Nx) |
+| Monorepo           | [Nx](https://nx.dev) 23                                                                |
+| Réactivité         | Angular Signals, [RxJS](https://rxjs.dev) 7.8                                          |
+| Langage            | TypeScript 6 (mode strict)                                                             |
+| Styles             | SCSS                                                                                   |
+| Tests unitaires    | Jest (`jest-preset-angular`)                                                           |
+| Qualité            | ESLint, Prettier                                                                       |
+| Build / dev server | `@angular/build` (application builder)                                                 |
 
 ## Prérequis
 
@@ -43,15 +43,16 @@ npm install
 
 Scripts npm (racine) — préférés pour l’onboarding :
 
-| Commande | Description |
-|----------|-------------|
-| `npm start` | Serveur de dev (`aether-app`), rechargement à chaud |
-| `npm run build` | Build production dans `dist/apps/aether-app` |
-| `npm test` | Tests unitaires Jest de `aether-app` |
-| `npm run lint` | ESLint sur les projets du workspace |
-| `npm run lint:fix` | ESLint avec corrections automatiques |
-| `npm run format` | Prettier (écriture) |
-| `npm run format:check` | Prettier (vérification CI) |
+| Commande               | Description                                                   |
+| ---------------------- | ------------------------------------------------------------- |
+| `npm start`            | Serveur de dev (`aether-app`), rechargement à chaud           |
+| `npm run build`        | Build production dans `dist/apps/aether-app`                  |
+| `npm test`             | Tests unitaires Jest de `aether-app`                          |
+| `npm run e2e`          | Smoke test Playwright du parcours dashboard → probes → détail |
+| `npm run lint`         | ESLint sur les projets du workspace                           |
+| `npm run lint:fix`     | ESLint avec corrections automatiques                          |
+| `npm run format`       | Prettier (écriture)                                           |
+| `npm run format:check` | Prettier (vérification CI)                                    |
 
 Équivalents Nx directs :
 
@@ -68,6 +69,14 @@ Après `npm run build`, servir le bundle localement :
 ```sh
 npx nx serve-static aether-app
 ```
+
+Pour préparer Playwright sur une machine CI ou de développement :
+
+```sh
+npm run e2e:install
+```
+
+Le smoke test démarre automatiquement `aether-app` et vérifie le boot, le dashboard, la liste des probes et l'ouverture du détail de `Public API`.
 
 L’app de dev est en général disponible sur [http://localhost:4200](http://localhost:4200) (port par défaut Angular).
 
