@@ -1,9 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ThemeService } from '../../../../libs/ui/shared/src/index';
+import { IconComponent, ThemeService } from '../../../../libs/ui/shared/src/index';
 
 @Component({
-  imports: [RouterModule],
+  imports: [RouterModule, IconComponent],
   selector: 'aether-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',

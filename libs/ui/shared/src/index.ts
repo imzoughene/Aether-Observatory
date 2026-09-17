@@ -1,5 +1,8 @@
 export * from './lib/theme.service';
 
+export * from './lib/icon/icon.component';
+export type { IconName } from './lib/icon/icon.component';
+
 export * from './lib/button/button.component';
 export type { ButtonVariant, ButtonSize, ButtonType } from './lib/button/button.component';
 

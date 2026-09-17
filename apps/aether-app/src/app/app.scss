@@ -7,7 +7,13 @@
 
 .app-shell-shell {
   min-height: 100vh;
-  background: var(--color-bg);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--color-primary) 7%, transparent),
+      transparent 32rem
+    ),
+    var(--color-bg);
   color: var(--color-text);
 }
 
@@ -23,10 +29,30 @@
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--font-size-lg);
   font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: #0f172a;
+  background: #67e8f9;
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);
 }
 
 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   min-width: 9rem;
 }

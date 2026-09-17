@@ -1,8 +1,17 @@
 <div class="app-shell-shell">
   <header class="topbar u-inline">
-    <div class="brand">Aether</div>
-    <button class="theme-toggle u-button" type="button" (click)="toggleTheme()">
-      {{ isDark() ? 'Switch to light' : 'Switch to dark' }}
+    <div class="brand">
+      <span class="brand-mark"><aether-icon name="activity" [size]="18" /></span>
+      <span>Aether</span>
+    </div>
+    <button
+      class="theme-toggle u-button"
+      type="button"
+      (click)="toggleTheme()"
+      [attr.aria-label]="isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+    >
+      <aether-icon [name]="isDark() ? 'sun' : 'moon'" [size]="17" />
+      <span>{{ isDark() ? 'Light mode' : 'Dark mode' }}</span>
     </button>
   </header>
   <router-outlet></router-outlet>

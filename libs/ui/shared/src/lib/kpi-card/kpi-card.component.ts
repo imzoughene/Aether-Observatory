@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
+import { BadgeComponent, BadgeVariant } from '../badge/badge.component';
+import { IconComponent } from '../icon/icon.component';
 
 export type KpiCardTrend = 'up' | 'down' | 'stable';
 export type KpiCardSeverity = 'success' | 'warning' | 'error' | 'neutral';
@@ -17,18 +19,24 @@ export interface KpiCardData {
 @Component({
   selector: 'aether-kpi-card',
   standalone: true,
+  imports: [BadgeComponent, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="kpi-card" [attr.aria-label]="kpi().label">
       <div class="kpi-header">
         <span class="kpi-label">{{ kpi().label }}</span>
-        <span class="kpi-category">{{ kpi().category }}</span>
+        <aether-badge [variant]="badgeVariant()" size="sm" [dot]="true">{{
+          statusCode()
+        }}</aether-badge>
       </div>
 
       <div class="kpi-value" [class]="severity()">{{ displayValue() }}</div>
 
       <div class="kpi-footer">
-        <span class="kpi-trend" [class]="trend()">{{ trendLabel() }}</span>
+        <span class="kpi-trend" [class]="trend()">
+          <aether-icon [name]="trendIcon()" [size]="14" />
+          {{ trendLabel() }}
+        </span>
         <span class="kpi-average">Avg {{ rollingAverage() }}</span>
       </div>
 
@@ -58,6 +66,16 @@ export interface KpiCardData {
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+        transition:
+          transform var(--motion-standard) ease,
+          box-shadow var(--motion-standard) ease,
+          border-color var(--motion-standard) ease;
+      }
+
+      .kpi-card:hover {
+        transform: translateY(-3px);
+        border-color: #99f6e4;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
       }
 
       .kpi-header,
@@ -97,6 +115,9 @@ export interface KpiCardData {
       }
 
       .kpi-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         font-size: 12px;
         font-weight: 600;
       }
@@ -132,6 +153,35 @@ export class KpiCardComponent {
 
   readonly severity = computed<KpiCardSeverity>(() => this.kpi().severity ?? 'neutral');
   readonly trend = computed<KpiCardTrend>(() => this.kpi().trend ?? 'stable');
+  readonly statusCode = computed(() => {
+    switch (this.severity()) {
+      case 'success':
+        return 'OK';
+      case 'warning':
+        return 'WARN';
+      case 'error':
+        return 'CRIT';
+      default:
+        return 'INFO';
+    }
+  });
+  readonly badgeVariant = computed<BadgeVariant>(() => {
+    switch (this.severity()) {
+      case 'success':
+        return 'success';
+      case 'warning':
+        return 'warning';
+      case 'error':
+        return 'danger';
+      default:
+        return 'info';
+    }
+  });
+  readonly trendIcon = computed(() => {
+    if (this.trend() === 'up') return 'chevron-right' as const;
+    if (this.trend() === 'down') return 'chevron-left' as const;
+    return 'activity' as const;
+  });
   readonly displayValue = computed(
     () =>
       this.kpi().formattedValue ??

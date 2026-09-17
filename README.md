@@ -6,6 +6,12 @@ Monorepo Nx pour un **tableau de bord d’entreprise** moderne : Angular avec **
 
 Fournir une base applicative scalable pour un dashboard entreprise : routing, state réactif (signals + RxJS), composants réutilisables et conventions Nx (lint, tests, build cache). L’application hôte actuelle est **`aether-app`**.
 
+## Aperçu UI
+
+![Aether dashboard avec navigation iconée, KPI et badges d’état](./docs/screenshots/aether-dashboard.png)
+
+La couche UI utilise un jeu d’icônes SVG partagé, des badges d’état cohérents (`OK`, `WARN`, `CRIT`), des transitions discrètes, un shimmer de chargement et un support `prefers-reduced-motion` pour une démonstration plus lisible et plus vivante.
+
 ## Stack technique
 
 | Domaine            | Technologies                                                                           |

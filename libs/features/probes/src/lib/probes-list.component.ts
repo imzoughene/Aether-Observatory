@@ -15,6 +15,8 @@ import {
   ErrorStateComponent,
   GenericTableComponent,
   LoadingIndicatorComponent,
+  BadgeComponent,
+  BadgeVariant,
   TableCellContext,
   TableColumn,
   TableSort,
@@ -39,7 +41,13 @@ type ProbeListState =
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, ErrorStateComponent, GenericTableComponent, LoadingIndicatorComponent],
+  imports: [
+    AsyncPipe,
+    BadgeComponent,
+    ErrorStateComponent,
+    GenericTableComponent,
+    LoadingIndicatorComponent,
+  ],
   selector: 'aether-probes-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ProbesService],
@@ -144,7 +152,9 @@ type ProbeListState =
                   </div>
                 </div>
                 <ng-template #healthCell let-value="value">
-                  <strong [class]="'health health-' + value">{{ value }}</strong>
+                  <aether-badge [variant]="healthBadgeVariant(value)" size="sm" [dot]="true">
+                    {{ healthStatusCode(value) }}
+                  </aether-badge>
                 </ng-template>
                 <ui-generic-table
                   [columns]="columns()"
@@ -276,21 +286,6 @@ type ProbeListState =
       .pagination button:disabled {
         cursor: not-allowed;
         opacity: 0.45;
-      }
-      .health {
-        font-size: 12px;
-      }
-      .health-active {
-        color: #15803d;
-      }
-      .health-warning {
-        color: #b45309;
-      }
-      .health-error {
-        color: #b91c1c;
-      }
-      .health-inactive {
-        color: #64748b;
       }
       @media (max-width: 800px) {
         .workspace {
@@ -434,6 +429,16 @@ export class ProbesListComponent {
     return { active: 'Healthy', warning: 'Degraded', error: 'Critical', inactive: 'Unknown' }[
       status
     ];
+  }
+
+  healthStatusCode(label: string): string {
+    return { Healthy: 'OK', Degraded: 'WARN', Critical: 'CRIT', Unknown: 'INFO' }[label] ?? 'INFO';
+  }
+
+  healthBadgeVariant(label: string): BadgeVariant {
+    return { Healthy: 'success', Degraded: 'warning', Critical: 'danger', Unknown: 'default' }[
+      label
+    ] as BadgeVariant;
   }
 
   handleAction(event: { action: string; row: ProbeSummary }): void {

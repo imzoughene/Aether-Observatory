@@ -105,7 +105,7 @@ import { AppNavComponent } from './app-nav.component';
         :host,
         :host.collapsed {
           position: fixed;
-          top: 56px;
+          top: 60px;
           left: 0;
           bottom: 0;
           z-index: 30;

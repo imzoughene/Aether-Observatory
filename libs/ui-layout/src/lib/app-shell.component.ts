@@ -42,7 +42,7 @@ import { SidebarComponent } from './sidebar.component';
       .content {
         padding: 16px;
         overflow: auto;
-        background: #f8fafc;
+        background: var(--color-bg);
       }
 
       @media (max-width: 767px) {
