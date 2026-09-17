@@ -61,6 +61,7 @@ export type ProbeDetailState =
               <a routerLink="telemetry" routerLinkActive="active">Telemetry</a>
               <a routerLink="logs" routerLinkActive="active">Logs</a>
               <a routerLink="actions" routerLinkActive="active">Actions</a>
+              <a routerLink="configuration" routerLinkActive="active">Configuration</a>
             </nav>
             <router-outlet />
           }

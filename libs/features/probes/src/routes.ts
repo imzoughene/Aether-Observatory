@@ -30,6 +30,11 @@ export const probesRoutes: Route[] = [
         loadComponent: () =>
           import('./lib/probe-actions.component').then((m) => m.ProbeActionsComponent),
       },
+      {
+        path: 'configuration',
+        loadComponent: () =>
+          import('./lib/probe-configuration.component').then((m) => m.ProbeConfigurationComponent),
+      },
     ],
   },
 ];
