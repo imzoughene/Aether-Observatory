@@ -25,6 +25,8 @@
       "@aether/core": ["libs/core/src/index.ts"],
       "@aether/ui-shared": ["libs/ui/shared/src/index.ts"],
       "@aether/ui-shared/styles": ["libs/ui/shared/src/styles/index.scss"],
+      "@aether/ui-charts": ["libs/ui/charts/src/index.ts"],
+      "@aether/feature-dashboard": ["libs/features/dashboard/src/index.ts"],
       "@aether/data-models": ["./libs/data/models/src/index.ts"],
       "@aether/data-services": ["./libs/data/services/src/index.ts"]
     }

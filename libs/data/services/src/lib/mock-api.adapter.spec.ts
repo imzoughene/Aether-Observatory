@@ -20,6 +20,32 @@ describe('MockApiAdapter', () => {
     expect(response.items[0].name).toBe('Primary DNS');
   });
 
+  it('returns dashboard KPI tiles', async () => {
+    const adapter = new MockApiAdapter();
+    adapter.configure({ latencyMs: 0 });
+
+    const response = await firstValueFrom(adapter.get(API_ENDPOINTS.kpis));
+
+    expect(response).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'kpi-total-probes', category: 'probes' }),
+      ])
+    );
+  });
+
+  it('filters KPI tiles by category', async () => {
+    const adapter = new MockApiAdapter();
+    adapter.configure({ latencyMs: 0 });
+
+    const response = await firstValueFrom(
+      adapter.get(API_ENDPOINTS.kpis, { category: 'uptime' })
+    );
+
+    expect(response).toEqual([
+      expect.objectContaining({ id: 'kpi-uptime', category: 'uptime' }),
+    ]);
+  });
+
   it('emits an API error when the configured error rate is certain', async () => {
     const adapter = new MockApiAdapter();
     adapter.configure({ latencyMs: 0, errorRate: 1 });

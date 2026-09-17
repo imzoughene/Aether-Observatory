@@ -11,9 +11,7 @@ export const appRoutes: Route[] = [
 			{
 				path: 'dashboard',
 				loadChildren: () =>
-					import('../../../../libs/features/dashboard/src/routes').then(
-						(m) => m.dashboardRoutes
-					),
+					import('@aether/feature-dashboard').then((m) => m.dashboardRoutes),
 			},
 			{
 				path: 'probes',

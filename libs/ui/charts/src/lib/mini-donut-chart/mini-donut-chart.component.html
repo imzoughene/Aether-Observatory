@@ -1,0 +1,14 @@
+<div class="donut-layout">
+  <div class="donut" [style.background]="gradient()" role="img" aria-label="Donut chart"></div>
+  @if (legend().length) {
+    <ul class="legend">
+      @for (item of legend(); track item.label) {
+        <li>
+          <span class="swatch" [style.background]="item.color"></span>
+          <span class="legend-label">{{ item.label }}</span>
+          <span class="legend-value">{{ item.value }}</span>
+        </li>
+      }
+    </ul>
+  }
+</div>

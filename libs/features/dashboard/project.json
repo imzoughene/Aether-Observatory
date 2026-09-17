@@ -1,0 +1,17 @@
+{
+  "name": "feature-dashboard",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/features/dashboard/src",
+  "prefix": "aether",
+  "tags": ["scope:feature", "type:feature"],
+  "targets": {
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs"
+      ]
+    }
+  }
+}

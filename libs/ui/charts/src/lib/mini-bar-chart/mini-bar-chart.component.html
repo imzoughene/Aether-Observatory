@@ -1,0 +1,10 @@
+<div class="mini-bar-chart" role="img" [attr.aria-label]="'Bar chart with ' + values().length + ' data points'">
+  @for (bar of normalizedBars(); track $index) {
+    <div class="bar-group">
+      <div class="bar" [style.height]="bar.height" [attr.title]="bar.value"></div>
+      @if (bar.label) {
+        <span class="bar-label">{{ bar.label }}</span>
+      }
+    </div>
+  }
+</div>

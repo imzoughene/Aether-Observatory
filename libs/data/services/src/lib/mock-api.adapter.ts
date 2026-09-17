@@ -5,6 +5,8 @@ import {
   DEFAULT_PAGE_LIMIT,
   DEFAULT_PAGE_OFFSET,
   FilterParams,
+  Kpi,
+  KpiCategory,
   MAX_PAGE_LIMIT,
   PaginatedResponse,
   Probe,
@@ -88,6 +90,75 @@ const PROBES: Probe[] = [
   },
 ];
 
+const KPIS: Kpi[] = [
+  {
+    id: 'kpi-total-probes',
+    label: 'Total Probes',
+    value: 24,
+    category: 'probes',
+    severity: 'neutral',
+  },
+  {
+    id: 'kpi-active-probes',
+    label: 'Active',
+    value: 18,
+    category: 'probes',
+    severity: 'success',
+    trend: 'up',
+    trendPercent: 8,
+  },
+  {
+    id: 'kpi-warning-probes',
+    label: 'Warning',
+    value: 4,
+    category: 'probes',
+    severity: 'warning',
+    trend: 'down',
+    trendPercent: 12,
+  },
+  {
+    id: 'kpi-critical-probes',
+    label: 'Critical',
+    value: 2,
+    category: 'probes',
+    severity: 'error',
+    trend: 'stable',
+  },
+  {
+    id: 'kpi-uptime',
+    label: 'Global Uptime',
+    value: 99.7,
+    formattedValue: '99.7%',
+    unit: '%',
+    category: 'uptime',
+    severity: 'success',
+    trend: 'up',
+    trendPercent: 0.2,
+  },
+  {
+    id: 'kpi-latency',
+    label: 'Avg Latency',
+    value: 142,
+    formattedValue: '142 ms',
+    unit: 'ms',
+    category: 'performance',
+    severity: 'neutral',
+    trend: 'down',
+    trendPercent: 5,
+  },
+  {
+    id: 'kpi-error-rate',
+    label: 'Error Rate',
+    value: 0.8,
+    formattedValue: '0.8%',
+    unit: '%',
+    category: 'telemetry',
+    severity: 'warning',
+    trend: 'down',
+    trendPercent: 15,
+  },
+];
+
 @Injectable()
 export class MockApiAdapter extends ApiClient {
   private latencyMs = 250;
@@ -120,6 +191,13 @@ export class MockApiAdapter extends ApiClient {
   }
 
   private resolve<T>(path: string, params: ApiQueryParams): Observable<T> {
+    if (path === API_ENDPOINTS.kpis) {
+      return new Observable<T>((subscriber) => {
+        subscriber.next(this.listKpis(params) as T);
+        subscriber.complete();
+      });
+    }
+
     if (path === API_ENDPOINTS.probes) {
       return new Observable<T>((subscriber) => {
         subscriber.next(this.listProbes(params as ProbesListQuery) as T);
@@ -152,6 +230,12 @@ export class MockApiAdapter extends ApiClient {
           path,
         })
     );
+  }
+
+  private listKpis(params: ApiQueryParams): Kpi[] {
+    const category = (params as { category?: KpiCategory }).category;
+    const items = category ? KPIS.filter((kpi) => kpi.category === category) : KPIS;
+    return items.map((kpi) => ({ ...kpi }));
   }
 
   private listProbes(query: FilterParams): PaginatedResponse<ProbeSummary> {

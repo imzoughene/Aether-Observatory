@@ -1,0 +1,17 @@
+{
+  "name": "ui-charts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/ui/charts/src",
+  "prefix": "aether",
+  "tags": ["scope:shared", "type:ui"],
+  "targets": {
+    "lint": {
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs"
+      ]
+    }
+  }
+}
