@@ -31,7 +31,7 @@ export default [
             },
             {
               sourceTag: 'type:data',
-              onlyDependOnLibsWithTags: ['type:util'],
+              onlyDependOnLibsWithTags: ['type:data', 'type:util'],
             },
             {
               sourceTag: 'type:util',
