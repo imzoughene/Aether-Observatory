@@ -1,63 +1,203 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Probe } from '@aether/data-models';
+import { ProbesService } from '@aether/data-services';
+import {
+  Observable,
+  Subject,
+  catchError,
+  combineLatest,
+  map,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
+import { ProbeDetailContext } from './probe-detail-context';
+
+export type ProbeDetailState =
+  { status: 'loading' } | { status: 'loaded'; probe: Probe } | { status: 'error'; message: string };
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [AsyncPipe, RouterLink, RouterLinkActive, RouterOutlet],
   selector: 'aether-probe-detail',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [ProbeDetailContext],
   template: `
-    <section>
-      <div class="detail-header">
-        <a routerLink="/probes" class="back-link">← Back to probes</a>
-        <h2>Probe Details: {{ probeId }}</h2>
-      </div>
-
-      <div class="detail-grid">
-        <div class="info-card">
-          <h3>General Info</h3>
-          <div class="info-row"><span class="label">Status</span><span class="value status-active">Active</span></div>
-          <div class="info-row"><span class="label">Type</span><span class="value">HTTP</span></div>
-          <div class="info-row"><span class="label">Interval</span><span class="value">30s</span></div>
-          <div class="info-row"><span class="label">Timeout</span><span class="value">5s</span></div>
-        </div>
-
-        <div class="info-card">
-          <h3>Latest Metrics</h3>
-          <div class="info-row"><span class="label">Response Time</span><span class="value">124 ms</span></div>
-          <div class="info-row"><span class="label">Uptime (24h)</span><span class="value">99.7%</span></div>
-          <div class="info-row"><span class="label">Last Check</span><span class="value">2 min ago</span></div>
-          <div class="info-row"><span class="label">Region</span><span class="value">us-east-1</span></div>
-        </div>
-      </div>
-
-      <p class="hint">Probe detail feature module — lazy loaded with param :id.</p>
+    <section class="detail-page">
+      <a routerLink="/probes" class="back-link">Back to probes</a>
+      @if (detail$ | async; as state) {
+        @switch (state.status) {
+          @case ('loading') {
+            <div class="state-panel" role="status">Loading probe details...</div>
+          }
+          @case ('error') {
+            <div class="state-panel error-panel" role="alert">
+              <h2>Unable to load this probe</h2>
+              <p>{{ state.message }}</p>
+              <button type="button" (click)="refresh()">Refresh</button>
+            </div>
+          }
+          @case ('loaded') {
+            <header class="detail-header">
+              <div>
+                <p class="eyebrow">Probe detail</p>
+                <h2>{{ state.probe.name }}</h2>
+                <p class="target">{{ state.probe.target }}</p>
+              </div>
+              <button type="button" class="refresh-button" (click)="refresh()">Refresh</button>
+            </header>
+            <nav class="tabs" aria-label="Probe detail sections">
+              <a
+                routerLink="overview"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                >Overview</a
+              >
+              <a routerLink="telemetry" routerLinkActive="active">Telemetry</a>
+              <a routerLink="logs" routerLinkActive="active">Logs</a>
+              <a routerLink="actions" routerLinkActive="active">Actions</a>
+            </nav>
+            <router-outlet />
+          }
+        }
+      }
     </section>
   `,
   styles: [
     `
-    section { background:white; padding:24px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
-    .detail-header { margin-bottom:24px; }
-    .back-link { display:inline-block; color:#3b82f6; text-decoration:none; font-size:14px; margin-bottom:12px; }
-    .back-link:hover { text-decoration:underline; }
-    h2 { margin:0; color:#0f172a; }
-    h3 { margin:0 0 16px; color:#0f172a; font-size:16px; }
-    .detail-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px; }
-    .info-card { padding:20px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
-    .info-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e2e8f0; }
-    .info-row:last-child { border-bottom:none; }
-    .label { color:#64748b; }
-    .value { font-weight:500; color:#0f172a; }
-    .status-active { color:#16a34a; }
-    .hint { color:#64748b; font-style:italic; margin:16px 0 0; }
+      .detail-page {
+        display: grid;
+        gap: 16px;
+      }
+      .back-link,
+      .tabs a {
+        color: #0f766e;
+        text-decoration: none;
+      }
+      .back-link {
+        font-size: 13px;
+      }
+      .back-link:hover,
+      .tabs a:hover {
+        text-decoration: underline;
+      }
+      .detail-header,
+      .tabs,
+      .state-panel {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px;
+      }
+      .eyebrow {
+        margin: 0 0 4px;
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      h2 {
+        margin: 0;
+        color: #0f172a;
+      }
+      .target {
+        margin: 8px 0 0;
+        color: #64748b;
+        word-break: break-all;
+      }
+      .tabs {
+        display: flex;
+        gap: 24px;
+        padding: 0 20px;
+      }
+      .tabs a {
+        padding: 15px 0 12px;
+        border-bottom: 3px solid transparent;
+        font-size: 14px;
+      }
+      .tabs a.active {
+        border-bottom-color: #0f766e;
+        font-weight: 700;
+      }
+      button {
+        border: 0;
+        border-radius: 5px;
+        padding: 9px 14px;
+        color: #fff;
+        background: #0f766e;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+      }
+      .state-panel {
+        padding: 32px;
+        color: #475569;
+      }
+      .error-panel {
+        border-color: #fecaca;
+        background: #fff7f7;
+      }
+      .error-panel h2 {
+        margin-bottom: 8px;
+        font-size: 20px;
+      }
+      .error-panel p {
+        margin: 0 0 16px;
+      }
+      @media (max-width: 540px) {
+        .detail-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .tabs {
+          gap: 14px;
+          overflow-x: auto;
+        }
+      }
     `,
   ],
 })
-export class ProbeDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  probeId = '';
+export class ProbeDetailComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly probesService = inject(ProbesService);
+  private readonly context = inject(ProbeDetailContext);
+  private readonly refresh$ = new Subject<void>();
 
-  ngOnInit(): void {
-    this.probeId = this.route.snapshot.params['id'] ?? 'unknown';
+  readonly detail$: Observable<ProbeDetailState> = combineLatest({
+    id: this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
+    refresh: this.refresh$.pipe(startWith(undefined)),
+  }).pipe(
+    switchMap(({ id }) => {
+      if (!id) {
+        return of<ProbeDetailState>({ status: 'error', message: 'Probe id is missing.' });
+      }
+      return this.probesService.getById(id).pipe(
+        tap((probe) => this.context.probe.set(probe)),
+        map((probe): ProbeDetailState => ({ status: 'loaded', probe })),
+        startWith<ProbeDetailState>({ status: 'loading' }),
+        catchError(() => {
+          this.context.probe.set(null);
+          return of<ProbeDetailState>({
+            status: 'error',
+            message: 'The probe could not be loaded. Please try again.',
+          });
+        })
+      );
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+  refresh(): void {
+    this.refresh$.next();
   }
 }
