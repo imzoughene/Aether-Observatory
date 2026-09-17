@@ -1,15 +1,22 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  TemplateRef,
+  computed,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { SearchService, UiStateService } from '@aether/core';
 import { ProbesListQuery, ProbeSummary } from '@aether/data-models';
 import { ProbesService } from '@aether/data-services';
-import { DataTableComponent, DataTableColumn, DataTableRow } from '@aether/ui-shared';
+import { GenericTableComponent, TableCellContext, TableColumn, TableSort } from '@aether/ui-shared';
 import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap } from 'rxjs';
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DataTableComponent],
+  imports: [AsyncPipe, GenericTableComponent],
   selector: 'aether-probes-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ProbesService],
@@ -97,7 +104,19 @@ import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap 
                 </button>
               </div>
             </div>
-            <ui-data-table [columns]="columns" [rows]="toRows(result.items)" />
+            <ng-template #healthCell let-value="value">
+              <strong [class]="'health health-' + value">{{ value }}</strong>
+            </ng-template>
+            <ui-generic-table
+              [columns]="columns()"
+              [rows]="result.items"
+              [sort]="sortState()"
+              [rowActions]="rowActions"
+              emptyMessage="No probes match these filters."
+              (sortChange)="setTableSort($event)"
+              (rowSelected)="selectProbe($event)"
+              (action)="handleAction($event)"
+            />
           } @else {
             <p class="loading">Loading probes...</p>
           }
@@ -224,6 +243,21 @@ import { combineLatest, distinctUntilChanged, shareReplay, startWith, switchMap 
         color: #64748b;
         text-align: center;
       }
+      .health {
+        font-size: 12px;
+      }
+      .health-active {
+        color: #15803d;
+      }
+      .health-warning {
+        color: #b45309;
+      }
+      .health-error {
+        color: #b91c1c;
+      }
+      .health-inactive {
+        color: #64748b;
+      }
       @media (max-width: 800px) {
         .workspace {
           grid-template-columns: 1fr;
@@ -251,14 +285,27 @@ export class ProbesListComponent {
   private readonly searchService = inject(SearchService);
   readonly uiState = inject(UiStateService);
   readonly pageSize = 20;
-  readonly columns: readonly DataTableColumn[] = [
-    { key: 'name', label: 'Probe' },
-    { key: 'status', label: 'Status' },
-    { key: 'health', label: 'Health' },
+  private readonly healthCell =
+    viewChild<TemplateRef<TableCellContext<ProbeSummary>>>('healthCell');
+  readonly rowActions = [{ label: 'Open', action: 'open' }] as const;
+  readonly columns = computed<readonly TableColumn<ProbeSummary>[]>(() => [
+    { key: 'name', label: 'Probe', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    {
+      key: 'status',
+      label: 'Health',
+      cellTemplate: this.healthCell(),
+      value: (probe) => this.healthLabel(probe.status),
+    },
     { key: 'type', label: 'Mission type' },
-    { key: 'region', label: 'Region' },
-    { key: 'lastCheckAt', label: 'Last check' },
-  ];
+    { key: 'region', label: 'Region', value: (probe) => probe.region ?? '-' },
+    {
+      key: 'lastCheckAt',
+      label: 'Last check',
+      sortable: true,
+      value: (probe) => (probe.lastCheckAt ? new Date(probe.lastCheckAt).toLocaleString() : '-'),
+    },
+  ]);
 
   private readonly filter$ = toObservable(this.uiState.currentFilters).pipe(
     startWith(this.uiState.currentFilters()),
@@ -320,20 +367,27 @@ export class ProbesListComponent {
     this.uiState.setPage(this.uiState.currentFilters().page + 1);
   }
 
-  toRows(items: readonly ProbeSummary[]): readonly DataTableRow[] {
-    return items.map((probe) => ({
-      name: probe.name,
-      status: probe.status,
-      health: this.healthLabel(probe.status),
-      type: probe.type,
-      region: probe.region ?? '-',
-      lastCheckAt: probe.lastCheckAt ? new Date(probe.lastCheckAt).toLocaleString() : '-',
-    }));
+  sortState(): TableSort<ProbeSummary> | null {
+    const sort = this.uiState.currentFilters().sort;
+    if (!['name', 'status', 'lastCheckAt'].includes(sort.field)) return null;
+    return { key: sort.field as TableSort<ProbeSummary>['key'], direction: sort.direction };
   }
 
-  private healthLabel(status: ProbeSummary['status']): string {
+  setTableSort(sort: TableSort<ProbeSummary>): void {
+    this.uiState.setSort({ field: sort.key, direction: sort.direction });
+  }
+
+  selectProbe(probe: ProbeSummary): void {
+    this.uiState.selectProbe(probe.id);
+  }
+
+  healthLabel(status: ProbeSummary['status']): string {
     return { active: 'Healthy', warning: 'Degraded', error: 'Critical', inactive: 'Unknown' }[
       status
     ];
+  }
+
+  handleAction(event: { action: string; row: ProbeSummary }): void {
+    if (event.action === 'open') this.selectProbe(event.row);
   }
 }
