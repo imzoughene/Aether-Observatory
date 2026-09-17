@@ -1,7 +1,7 @@
 export default {
   displayName: 'ui-shared',
   preset: '../../../jest.preset.js',
-  setupFilesAfterEach: ['<rootDir>/src/test-setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../coverage/libs/ui/shared',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
