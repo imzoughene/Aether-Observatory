@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { CoreFacade } from '@aether/core';
 import {
-  BadgeComponent,
   CardComponent,
   ErrorStateComponent,
+  KpiCardComponent,
   SkeletonCardComponent,
 } from '@aether/ui-shared';
 import { MiniBarChartComponent, MiniDonutChartComponent } from '@aether/ui-charts';
@@ -15,7 +15,7 @@ import { DashboardFacade } from './dashboard.facade';
   imports: [
     CommonModule,
     CardComponent,
-    BadgeComponent,
+    KpiCardComponent,
     SkeletonCardComponent,
     ErrorStateComponent,
     MiniBarChartComponent,
@@ -54,24 +54,7 @@ import { DashboardFacade } from './dashboard.facade';
       } @else {
         <div class="kpi-grid">
           @for (kpi of dashboard.kpis(); track kpi.id) {
-            <aether-card variant="elevated" padding="md">
-              <div class="kpi-card">
-                <div class="kpi-header">
-                  <span class="kpi-label">{{ kpi.label }}</span>
-                  @if (kpi.severity) {
-                    <aether-badge [variant]="dashboard.badgeVariant(kpi.severity)" size="sm">
-                      {{ kpi.category }}
-                    </aether-badge>
-                  }
-                </div>
-                <div class="kpi-value" [class]="kpi.severity ?? 'neutral'">
-                  {{ dashboard.displayValue(kpi) }}
-                </div>
-                @if (dashboard.trendLabel(kpi); as trend) {
-                  <span class="kpi-trend" [class]="kpi.trend ?? 'stable'">{{ trend }}</span>
-                }
-              </div>
-            </aether-card>
+            <aether-kpi-card [kpi]="kpi" />
           }
         </div>
 
@@ -156,58 +139,6 @@ import { DashboardFacade } from './dashboard.facade';
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 16px;
-      }
-
-      .kpi-card {
-        display: grid;
-        gap: 8px;
-      }
-
-      .kpi-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .kpi-label {
-        font-size: 13px;
-        color: #64748b;
-      }
-
-      .kpi-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-      }
-
-      .kpi-value.success {
-        color: #16a34a;
-      }
-
-      .kpi-value.warning {
-        color: #d97706;
-      }
-
-      .kpi-value.error {
-        color: #dc2626;
-      }
-
-      .kpi-trend {
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .kpi-trend.up {
-        color: #16a34a;
-      }
-
-      .kpi-trend.down {
-        color: #dc2626;
-      }
-
-      .kpi-trend.stable {
-        color: #64748b;
       }
 
       .chart-grid {
