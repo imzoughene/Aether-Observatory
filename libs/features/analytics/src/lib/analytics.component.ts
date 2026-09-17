@@ -1,25 +1,32 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { CardComponent } from '@aether/ui-shared';
 import {
   BarChartComponent,
-  BarChartSeries,
   DonutChartComponent,
-  DonutChartSegment,
   TimeSeriesChartComponent,
-  TimeSeriesSeries,
 } from '@aether/ui-charts';
+import {
+  AnalyticsGrouping,
+  AnalyticsMetric,
+  AnalyticsRange,
+  AnalyticsService,
+} from './analytics.service';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
+    AsyncPipe,
+    FormsModule,
     CardComponent,
     TimeSeriesChartComponent,
     BarChartComponent,
     DonutChartComponent,
   ],
   selector: 'aether-analytics',
+  providers: [AnalyticsService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="analytics-page">
@@ -27,35 +34,72 @@ import {
         <div>
           <p class="eyebrow">Insights</p>
           <h2>Analytics</h2>
-          <p class="subtitle">Request volume, latency, and response-time distribution.</p>
+          <p class="subtitle">Explore operational signals across your selected time window.</p>
+        </div>
+        <div class="summary">
+          <span>Period total</span>
+          <strong>{{ (analytics.viewModel$ | async)?.total }}</strong>
+          <small>{{ (analytics.viewModel$ | async)?.change }} vs previous period</small>
         </div>
       </header>
 
-      <div class="chart-grid">
-        <aether-card variant="default" padding="lg" [header]="true">
-          <div cardHeader class="chart-header">
-            <h3>Request Volume</h3>
-            <span class="chart-meta">Last 7 days</span>
-          </div>
-          <aether-bar-chart [series]="requestVolumeSeries" [config]="requestVolumeConfig" />
-        </aether-card>
+      <form class="filters" aria-label="Analytics filters">
+        <label>
+          Date range
+          <select [ngModel]="range" (ngModelChange)="changeRange($event)" name="range">
+            @for (option of rangeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Group by
+          <select [ngModel]="grouping" (ngModelChange)="changeGrouping($event)" name="grouping">
+            @for (option of groupingOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Metric
+          <select [ngModel]="metric" (ngModelChange)="changeMetric($event)" name="metric">
+            @for (option of metricOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+      </form>
 
-        <aether-card variant="default" padding="lg" [header]="true">
-          <div cardHeader class="chart-header">
-            <h3>Response Time Trend</h3>
-            <span class="chart-meta">P95 latency (ms)</span>
-          </div>
-          <aether-time-series-chart [series]="latencySeries" [config]="latencyConfig" />
-        </aether-card>
+      @if (analytics.viewModel$ | async; as view) {
+        <div class="chart-grid">
+          <aether-card variant="default" padding="lg" [header]="true">
+            <div cardHeader class="chart-header">
+              <h3>Signal over time</h3>
+              <span class="chart-meta">{{ groupingLabel }}</span>
+            </div>
+            <aether-time-series-chart
+              [series]="view.timeSeries"
+              [config]="timeSeriesConfig(view.labels)"
+            />
+          </aether-card>
 
-        <aether-card variant="default" padding="lg" [header]="true">
-          <div cardHeader class="chart-header">
-            <h3>Response Time Distribution</h3>
-            <span class="chart-meta">Current window</span>
-          </div>
-          <aether-donut-chart [segments]="responseTimeSegments" [config]="responseTimeConfig" />
-        </aether-card>
-      </div>
+          <aether-card variant="default" padding="lg" [header]="true">
+            <div cardHeader class="chart-header">
+              <h3>Aggregated volume</h3>
+              <span class="chart-meta">Mock server-side grouping</span>
+            </div>
+            <aether-bar-chart [series]="view.volume" [config]="barConfig(view.labels)" />
+          </aether-card>
+
+          <aether-card variant="default" padding="lg" [header]="true">
+            <div cardHeader class="chart-header">
+              <h3>Distribution</h3>
+              <span class="chart-meta">Current window</span>
+            </div>
+            <aether-donut-chart [segments]="view.distribution" [config]="donutConfig(view.total)" />
+          </aether-card>
+        </div>
+      }
     </section>
   `,
   styles: [
@@ -66,6 +110,9 @@ import {
       }
 
       .page-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
         background: white;
         padding: 24px;
         border-radius: 8px;
@@ -88,6 +135,53 @@ import {
       .subtitle {
         margin: 8px 0 0;
         color: #64748b;
+      }
+
+      .summary {
+        display: grid;
+        align-content: center;
+        min-width: 150px;
+        text-align: right;
+      }
+
+      .summary span,
+      .summary small {
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      .summary strong {
+        color: #0f766e;
+        font-size: 28px;
+      }
+
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 16px 20px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        min-width: 160px;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      select {
+        min-height: 38px;
+        padding: 0 34px 0 10px;
+        color: #0f172a;
+        background: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font: inherit;
       }
 
       .chart-grid {
@@ -113,45 +207,80 @@ import {
         font-size: 12px;
         color: #64748b;
       }
+
+      @media (max-width: 640px) {
+        .page-header {
+          display: grid;
+        }
+
+        .summary {
+          text-align: left;
+        }
+
+        label {
+          width: 100%;
+        }
+      }
     `,
   ],
 })
 export class AnalyticsComponent {
-  readonly requestVolumeSeries: BarChartSeries[] = [
-    {
-      name: 'Requests',
-      data: [1240, 1580, 980, 1720, 1450, 1890, 1320],
-    },
+  readonly analytics = inject(AnalyticsService);
+  range: AnalyticsRange = '30d';
+  grouping: AnalyticsGrouping = 'day';
+  metric: AnalyticsMetric = 'requests';
+
+  readonly rangeOptions = [
+    { value: '7d' as const, label: 'Last 7 days' },
+    { value: '30d' as const, label: 'Last 30 days' },
+    { value: '90d' as const, label: 'Last 90 days' },
+  ];
+  readonly groupingOptions = [
+    { value: 'hour' as const, label: 'Hourly' },
+    { value: 'day' as const, label: 'Daily' },
+    { value: 'week' as const, label: 'Weekly' },
+  ];
+  readonly metricOptions = [
+    { value: 'requests' as const, label: 'Requests' },
+    { value: 'latency' as const, label: 'P95 latency' },
+    { value: 'errors' as const, label: 'Errors' },
   ];
 
-  readonly requestVolumeConfig = {
-    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    yAxisTitle: 'Requests',
-  };
+  get groupingLabel(): string {
+    return this.groupingOptions.find((option) => option.value === this.grouping)?.label ?? '';
+  }
 
-  readonly latencySeries: TimeSeriesSeries[] = [
-    {
-      name: 'P95 Latency',
-      data: [142, 138, 155, 149, 162, 158, 151],
-    },
-  ];
+  changeRange(range: AnalyticsRange): void {
+    this.range = range;
+    this.analytics.setRange(range);
+  }
 
-  readonly latencyConfig = {
-    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    yAxisTitle: 'Milliseconds',
-    curve: 'smooth' as const,
-  };
+  changeGrouping(grouping: AnalyticsGrouping): void {
+    this.grouping = grouping;
+    this.analytics.setGrouping(grouping);
+  }
 
-  readonly responseTimeSegments: DonutChartSegment[] = [
-    { label: '< 100ms', value: 42, color: '#16a34a' },
-    { label: '100–300ms', value: 35, color: '#2563eb' },
-    { label: '300–500ms', value: 15, color: '#f59e0b' },
-    { label: '> 500ms', value: 8, color: '#dc2626' },
-  ];
+  changeMetric(metric: AnalyticsMetric): void {
+    this.metric = metric;
+    this.analytics.setMetric(metric);
+  }
 
-  readonly responseTimeConfig = {
-    centerLabel: 'Requests',
-    centerValue: '12.4k',
-    showLegend: true,
-  };
+  timeSeriesConfig(labels: string[]) {
+    return {
+      categories: labels,
+      yAxisTitle: this.metric === 'latency' ? 'Milliseconds' : 'Events',
+    };
+  }
+
+  barConfig(labels: string[]) {
+    return { categories: labels, yAxisTitle: 'Events' };
+  }
+
+  donutConfig(total: string) {
+    return {
+      centerLabel: this.metric === 'latency' ? 'Requests' : 'Total',
+      centerValue: total,
+      showLegend: true,
+    };
+  }
 }
